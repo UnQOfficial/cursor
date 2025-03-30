@@ -1,1 +1,98 @@
-# cursor-free-vip-termux
+# Cursor AI Editor Installer
+
+![Cursor AI](https://assets-global.website-files.com/646044bd52be957e53a2bceb/64ff9cfea5a568f4905d6981_Group%2012.svg)
+
+A modern, comprehensive bash script for installing, managing, and customizing Cursor AI Editor on Linux systems.
+
+## Features
+
+- **🚀 Full Installation Management**
+  - Install, uninstall, and update Cursor AI Editor with ease
+  - Cross-architecture support (x86_64 and ARM64)
+  - Automatic dependency checking
+
+- **🔒 Privacy Features**
+  - Reset telemetry and request IDs
+  - Backup and restore configuration files
+
+- **💼 User Experience**
+  - Interactive menu with modern UI
+  - Command-line options for scripting
+  - User-friendly error handling
+  - Dynamic configuration that works for any user
+
+## Prerequisites
+
+- Linux operating system (Debian, Ubuntu, Fedora, Arch, etc.)
+- Basic system utilities (wget, grep, sed, awk)
+- Optional: xxd, jq, python3 (for enhanced functionality)
+
+## Installation
+
+### Interactive Mode
+
+```bash
+bash cursor.sh
+```
+
+### Command-line Options
+
+```bash
+# Install Cursor AI Editor
+sudo bash cursor.sh -i
+
+# Uninstall Cursor AI Editor
+sudo bash cursor.sh -u
+
+# Update to the latest version
+sudo bash cursor.sh -p
+
+# Reset request IDs
+bash cursor.sh -r
+
+# Show information about Cursor
+bash cursor.sh -a
+
+# Display help
+bash cursor.sh -h
+```
+
+## Using on Android with Termux
+
+This tool can be used on Android devices through Termux by installing a Linux distribution:
+
+### Recommended Distros for Android
+
+1. **Ubuntu 24.04 (Recommended)**
+   - Follow the installation guide: [How to Install Ubuntu 24.04 on Android Without Root](https://maheshtechnicals.com/how-to-install-ubuntu-24-04-on-android-without-root/)
+
+2. **Kali Linux**
+   - Alternative option: [How to Install Kali Linux on Android (No Root) 2024](https://maheshtechnicals.com/how-to-install-kali-linux-on-android-no-root-2024/)
+
+After installing your preferred Linux distro in Termux, you can proceed with the Cursor AI Editor installation as described above.
+
+## Privacy
+
+This script provides functionality to reset the telemetry IDs that Cursor uses, giving you a fresh identity when needed. It creates backups of your original configuration for safety.
+
+## Customization
+
+The installer creates configuration at `$HOME/.config/Cursor/` which is specific to your user account. All backup paths and configurations are dynamically set based on the current user's home directory.
+
+## Troubleshooting
+
+If you encounter permission issues:
+- For installation/uninstallation: Run the script with `sudo`
+- For configuration changes: Ensure you have write permissions to your config directory
+
+## Author
+
+Created by Mahesh Technicals
+
+## License
+
+This installer is provided as-is, free to use and distribute.
+
+## Disclaimer
+
+This is an unofficial installer for Cursor AI Editor. Cursor is a product of Anysphere Inc.
