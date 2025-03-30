@@ -1,6 +1,8 @@
 # Cursor AI Editor Installer
 
-![Cursor AI](https://assets-global.website-files.com/646044bd52be957e53a2bceb/64ff9cfea5a568f4905d6981_Group%2012.svg)
+<p align="center">
+  <img src="cursor.png" alt="Cursor AI Logo" width="400">
+</p>
 
 A modern, comprehensive bash script for installing, managing, and customizing Cursor AI Editor on Linux systems.
 
