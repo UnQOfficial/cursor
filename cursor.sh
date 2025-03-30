@@ -559,7 +559,7 @@ fix_storage_json() {
     "workspaces": [],
     "folders": [
       {
-        "folderUri": "file:///home/mahesh/Downloads"
+        "folderUri": "file://${HOME}/Downloads"
       }
     ],
     "emptyWindows": [
@@ -570,7 +570,7 @@ fix_storage_json() {
   },
   "profileAssociations": {
     "workspaces": {
-      "file:///home/mahesh/Downloads": "__default__profile__"
+      "file://${HOME}/Downloads": "__default__profile__"
     },
     "emptyWindows": {}
   },
@@ -605,7 +605,7 @@ fix_storage_json() {
   },
   "windowsState": {
     "lastActiveWindow": {
-      "backupPath": "/home/mahesh/.config/Cursor/Backups/1743309163731",
+      "backupPath": "${HOME}/.config/Cursor/Backups/1743309163731",
       "uiState": {
         "mode": 0,
         "x": 0,
@@ -689,9 +689,9 @@ reset_request_ids() {
     
     print_text "${BLUE}${BOLD}[INFO] Reading current telemetry IDs...${RESET}"
     
-    # Try a special direct method for Mahesh's specific storage.json
-    if grep -q "mahesh/Downloads" "$CONFIG_FILE"; then
-        print_text "${YELLOW}${BOLD}[INFO] Using specialized method for Mahesh's storage.json${RESET}"
+    # Try a special direct method for the specific storage.json format
+    if grep -q "Downloads" "$CONFIG_FILE"; then
+        print_text "${YELLOW}${BOLD}[INFO] Using specialized method for storage.json${RESET}"
         fix_storage_json
         return 0
     fi
