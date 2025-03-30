@@ -4,6 +4,8 @@
 
 A modern, comprehensive bash script for installing, managing, and customizing Cursor AI Editor on Linux systems.
 
+> **GitHub Repository**: [https://github.com/MaheshTechnicals/cursor-free-vip-termux.git](https://github.com/MaheshTechnicals/cursor-free-vip-termux.git)
+
 ## Features
 
 - **🚀 Full Installation Management**
@@ -85,6 +87,18 @@ If you encounter permission issues:
 - For installation/uninstallation: Run the script with `sudo`
 - For configuration changes: Ensure you have write permissions to your config directory
 
+## Original Cursor AI Editor
+
+If you prefer to download the official version directly, visit the official Cursor website:
+- [https://cursor.sh](https://cursor.sh)
+
+## Disclaimer
+
+- This installer is provided as-is, free to use and distribute.
+- This tool is created for **educational purposes only**.
+- This is an unofficial installer for Cursor AI Editor. Cursor is a product of Anysphere Inc.
+- The authors are not responsible for any misuse of this tool or any violations of terms of service.
+
 ## Author
 
 Created by Mahesh Technicals
@@ -92,7 +106,3 @@ Created by Mahesh Technicals
 ## License
 
 This installer is provided as-is, free to use and distribute.
-
-## Disclaimer
-
-This is an unofficial installer for Cursor AI Editor. Cursor is a product of Anysphere Inc.
