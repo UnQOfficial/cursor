@@ -31,6 +31,22 @@ A modern, comprehensive bash script for installing, managing, and customizing Cu
 
 ## Installation
 
+### From GitHub Repository
+
+```bash
+# Clone the repository
+git clone https://github.com/MaheshTechnicals/cursor-free-vip-termux.git
+
+# Navigate to the directory
+cd cursor-free-vip-termux
+
+# Make the script executable
+chmod +x cursor.sh
+
+# Run the installer
+./cursor.sh
+```
+
 ### Interactive Mode
 
 ```bash
