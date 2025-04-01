@@ -31,7 +31,31 @@ A modern, comprehensive bash script for installing, managing, and customizing Cu
 - Basic system utilities (wget, grep, sed, awk)
 - Optional: xxd, jq, python3 (for enhanced functionality)
 
+## System Architecture
+
+Before installation, check your system architecture:
+
+```bash
+uname -m
+```
+
+This will show one of:
+- `x86_64` - For 64-bit Intel/AMD systems
+- `aarch64` or `arm64` - For ARM64 systems (like Android devices, Raspberry Pi)
+
 ## Installation
+
+### Download Links by Architecture
+
+- **x86_64 (64-bit Intel/AMD)**:
+  ```bash
+  https://downloads.cursor.com/production/1649e229afdef8fd1d18ea173f063563f1e722ef/linux/x64/Cursor-0.48.6-x86_64.AppImage
+  ```
+
+- **ARM64**:
+  ```bash
+  https://downloads.cursor.com/production/b6fb41b5f36bda05cab7109606e7404a65d1ff32/linux/arm64/Cursor-0.47.9-aarch64.AppImage
+  ```
 
 ### From GitHub Repository
 
@@ -45,7 +69,7 @@ cd cursor-free-vip-termux
 # Make the script executable
 chmod +x cursor.sh
 
-# Run the installer
+# Run the installer (it will automatically detect your architecture)
 ./cursor.sh
 ```
 

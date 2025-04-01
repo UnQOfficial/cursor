@@ -11,15 +11,15 @@
 
 # Define variables
 APP_NAME="Cursor"
-APP_VERSION="0.47.9"
+APP_VERSION="0.48.6"
 ARCH=$(uname -m)
 APPIMAGE_URL=""
 
 # Set architecture-specific URL
 if [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
-    APPIMAGE_URL="https://downloads.cursor.com/production/b6fb41b5f36bda05cab7109606e7404a65d1ff32/linux/arm64/Cursor-${APP_VERSION}-aarch64.AppImage"
+    APPIMAGE_URL="https://downloads.cursor.com/production/b6fb41b5f36bda05cab7109606e7404a65d1ff32/linux/arm64/Cursor-0.47.9-aarch64.AppImage"
 elif [[ "$ARCH" == "x86_64" ]]; then
-    APPIMAGE_URL="https://downloads.cursor.com/production/b6fb41b5f36bda05cab7109606e7404a65d1ff32/linux/x64/Cursor-${APP_VERSION}.AppImage"
+    APPIMAGE_URL="https://downloads.cursor.com/production/1649e229afdef8fd1d18ea173f063563f1e722ef/linux/x64/Cursor-0.48.6-x86_64.AppImage"
 else
     echo -e "\e[31m[ERROR] Unsupported architecture: $ARCH\e[0m"
     exit 1
