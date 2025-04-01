@@ -116,6 +116,59 @@ check_root() {
     return 0
 }
 
+# Function to install missing dependencies
+install_dependencies() {
+    local missing_deps=("$@")
+    
+    if [[ ${#missing_deps[@]} -eq 0 ]]; then
+        return 0
+    fi
+    
+    print_text "${YELLOW}${BOLD}[INFO] Installing missing dependencies: ${missing_deps[*]}${RESET}"
+    
+    # Detect package manager
+    if command -v apt &> /dev/null; then
+        print_text "${BLUE}${BOLD}[INFO] Using apt package manager...${RESET}"
+        apt update -qq && apt install -y "${missing_deps[@]}"
+    elif command -v dnf &> /dev/null; then
+        print_text "${BLUE}${BOLD}[INFO] Using dnf package manager...${RESET}"
+        dnf install -y "${missing_deps[@]}"
+    elif command -v yum &> /dev/null; then
+        print_text "${BLUE}${BOLD}[INFO] Using yum package manager...${RESET}"
+        yum install -y "${missing_deps[@]}"
+    elif command -v pacman &> /dev/null; then
+        print_text "${BLUE}${BOLD}[INFO] Using pacman package manager...${RESET}"
+        pacman -S --noconfirm "${missing_deps[@]}"
+    elif command -v zypper &> /dev/null; then
+        print_text "${BLUE}${BOLD}[INFO] Using zypper package manager...${RESET}"
+        zypper install -y "${missing_deps[@]}"
+    else
+        print_text "${RED}${BOLD}[ERROR] Could not detect package manager. Please install the following dependencies manually: ${missing_deps[*]}${RESET}"
+        print_text "${YELLOW}Press Enter to continue...${RESET}"
+        read -r
+        return 1
+    fi
+    
+    # Verify installation
+    local still_missing=()
+    for dep in "${missing_deps[@]}"; do
+        if ! command -v "$dep" &> /dev/null; then
+            still_missing+=("$dep")
+        fi
+    done
+    
+    if [[ ${#still_missing[@]} -gt 0 ]]; then
+        print_text "${RED}${BOLD}[ERROR] Failed to install some dependencies: ${still_missing[*]}${RESET}"
+        print_text "${YELLOW}Please install them manually.${RESET}"
+        print_text "${YELLOW}Press Enter to continue...${RESET}"
+        read -r
+        return 1
+    fi
+    
+    print_text "${GREEN}${BOLD}[SUCCESS] All dependencies installed successfully!${RESET}"
+    return 0
+}
+
 # Function to check dependencies
 check_dependencies() {
     local deps=("wget" "grep" "sed" "awk")
@@ -150,6 +203,50 @@ check_dependencies() {
         print_text "${YELLOW}${BOLD}[WARNING] Some optional dependencies are missing: ${missing_optional[*]}${RESET}"
         print_text "${YELLOW}${BOLD}[INFO] These are not required but recommended for better functionality:${RESET}"
         print_text "       For Debian/Ubuntu: ${BOLD}apt install ${missing_optional[*]}${RESET}"
+    fi
+    
+    print_text "${GREEN}${BOLD}[SUCCESS] All required dependencies are satisfied!${RESET}"
+    return 0
+}
+
+# Enhanced check_dependencies function that returns the missing dependencies for auto-install
+check_and_get_missing_dependencies() {
+    local deps=("wget" "grep" "sed" "awk")
+    local optional_deps=("xxd" "jq" "python3" "curl")
+    local missing_deps=()
+    local missing_optional=()
+    
+    print_text "${YELLOW}${BOLD}[INFO] Checking dependencies...${RESET}"
+    
+    for dep in "${deps[@]}"; do
+        if ! command -v "$dep" &> /dev/null; then
+            missing_deps+=("$dep")
+        fi
+    done
+    
+    for dep in "${optional_deps[@]}"; do
+        if ! command -v "$dep" &> /dev/null; then
+            missing_optional+=("$dep")
+        fi
+    done
+    
+    if [[ ${#missing_deps[@]} -gt 0 ]]; then
+        print_text "${YELLOW}${BOLD}[INFO] Missing required dependencies: ${missing_deps[*]}${RESET}"
+        print_text "${BLUE}${BOLD}[INFO] Will attempt to install automatically...${RESET}"
+        echo "${missing_deps[@]}"
+        return 1
+    fi
+    
+    if [[ ${#missing_optional[@]} -gt 0 ]]; then
+        print_text "${YELLOW}${BOLD}[WARNING] Some optional dependencies are missing: ${missing_optional[*]}${RESET}"
+        print_text "${YELLOW}${BOLD}[INFO] These are recommended but not required. Installing them may improve functionality.${RESET}"
+        print_text "${BLUE}${BOLD}[INFO] Would you like to install the optional dependencies? (y/n):${RESET} "
+        echo -n ""
+        read -r install_optional
+        if [[ "$install_optional" == "y" || "$install_optional" == "Y" ]]; then
+            echo "${missing_optional[@]}"
+            return 2
+        fi
     fi
     
     print_text "${GREEN}${BOLD}[SUCCESS] All required dependencies are satisfied!${RESET}"
@@ -317,6 +414,29 @@ fetch_download_urls() {
 # Function to install Cursor
 install_cursor() {
     display_header
+    
+    # Check and install missing dependencies automatically
+    local missing_deps
+    missing_deps=$(check_and_get_missing_dependencies)
+    local check_result=$?
+    
+    if [[ $check_result -eq 1 ]]; then
+        # Install required missing dependencies
+        print_text "${YELLOW}${BOLD}[INFO] Installing required dependencies...${RESET}"
+        if ! install_dependencies $missing_deps; then
+            print_text "${RED}${BOLD}[ERROR] Failed to install required dependencies. Installation aborted.${RESET}"
+            print_text "${YELLOW}Please install them manually and try again.${RESET}"
+            print_text "${YELLOW}Press Enter to return to the main menu...${RESET}"
+            read -r
+            return 1
+        fi
+    elif [[ $check_result -eq 2 ]]; then
+        # Install optional dependencies
+        print_text "${YELLOW}${BOLD}[INFO] Installing optional dependencies...${RESET}"
+        install_dependencies $missing_deps
+        # Continue even if optional dependencies fail
+    fi
+    
     check_installation
     if [ $? -eq 1 ]; then
         return

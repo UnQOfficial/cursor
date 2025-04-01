@@ -13,7 +13,8 @@ A modern, comprehensive bash script for installing, managing, and customizing Cu
 - **🚀 Full Installation Management**
   - Install, uninstall, and update Cursor AI Editor with ease
   - Cross-architecture support (x86_64 and ARM64)
-  - Automatic dependency checking
+  - **NEW: Automatic dependency installation**
+  - Dynamic version detection from GitHub repository
 
 - **🔒 Privacy Features**
   - Reset telemetry and request IDs
@@ -28,8 +29,10 @@ A modern, comprehensive bash script for installing, managing, and customizing Cu
 ## Prerequisites
 
 - Linux operating system (Debian, Ubuntu, Fedora, Arch, etc.)
-- Basic system utilities (wget, grep, sed, awk)
-- Optional: xxd, jq, python3 (for enhanced functionality)
+- Root access (for installation/uninstallation)
+- Internet connection (for downloading the latest version)
+
+**Note:** The script now automatically installs any missing dependencies, so you don't need to worry about manually installing them!
 
 ## System Architecture
 
@@ -45,17 +48,9 @@ This will show one of:
 
 ## Installation
 
-### Download Links by Architecture
+### Download Links
 
-- **x86_64 (64-bit Intel/AMD)**:
-  ```bash
-  https://downloads.cursor.com/production/1649e229afdef8fd1d18ea173f063563f1e722ef/linux/x64/Cursor-0.48.6-x86_64.AppImage
-  ```
-
-- **ARM64**:
-  ```bash
-  https://downloads.cursor.com/production/b6fb41b5f36bda05cab7109606e7404a65d1ff32/linux/arm64/Cursor-0.47.9-aarch64.AppImage
-  ```
+The script now automatically fetches the latest version from the GitHub repository, so you always get the most up-to-date version of Cursor AI Editor.
 
 ### From GitHub Repository
 
@@ -70,13 +65,13 @@ cd cursor-free-vip-termux
 chmod +x cursor.sh
 
 # Run the installer (it will automatically detect your architecture)
-./cursor.sh
+sudo ./cursor.sh
 ```
 
 ### Interactive Mode
 
 ```bash
-bash cursor.sh
+sudo bash cursor.sh
 ```
 
 ### Command-line Options
@@ -100,6 +95,18 @@ bash cursor.sh -a
 # Display help
 bash cursor.sh -h
 ```
+
+## Automatic Dependency Management
+
+The script now includes an intelligent dependency management system that:
+
+1. Automatically detects missing required dependencies
+2. Identifies your system's package manager (apt, dnf, yum, pacman, or zypper)
+3. Installs the missing dependencies using the appropriate package manager
+4. Verifies that the installation was successful
+5. Optionally installs recommended dependencies for enhanced functionality
+
+This eliminates the need to manually install dependencies before running the script.
 
 ## Using on Android with Termux
 
@@ -128,6 +135,11 @@ The installer creates configuration at `$HOME/.config/Cursor/` which is specific
 If you encounter permission issues:
 - For installation/uninstallation: Run the script with `sudo`
 - For configuration changes: Ensure you have write permissions to your config directory
+
+If automatic dependency installation fails:
+- The script will inform you which dependencies could not be installed
+- You can install them manually using your system's package manager
+- Try running the script again after installing the missing dependencies
 
 ## Original Cursor AI Editor
 
