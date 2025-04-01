@@ -9,54 +9,7 @@
 #                                                                              #
 ################################################################################
 
-# Define variables
-APP_NAME="Cursor"
-ARCH=$(uname -m)
-
-# Function to determine architecture and set appropriate version and URL
-set_arch_specific_vars() {
-    # Detect architecture and set version
-    if [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
-        APP_VERSION="0.47.9"
-        ARCH_SUFFIX="aarch64"
-        ARCH_PATH="arm64"
-        BUILD_HASH="b6fb41b5f36bda05cab7109606e7404a65d1ff32"
-        APPIMAGE_NAME="Cursor-${APP_VERSION}-${ARCH_SUFFIX}.AppImage"
-    elif [[ "$ARCH" == "x86_64" ]]; then
-        APP_VERSION="0.48.6"
-        ARCH_SUFFIX="x86_64"
-        ARCH_PATH="x64"
-        BUILD_HASH="1649e229afdef8fd1d18ea173f063563f1e722ef"
-        APPIMAGE_NAME="Cursor-${APP_VERSION}-${ARCH_SUFFIX}.AppImage"
-    else
-        print_text "${RED}${BOLD}[ERROR] Unsupported architecture: $ARCH${RESET}"
-        print_text "${YELLOW}Supported architectures: x86_64 (64-bit Intel/AMD) and aarch64/arm64${RESET}"
-        exit 1
-    fi
-
-    # Construct the download URL
-    APPIMAGE_URL="https://downloads.cursor.com/production/${BUILD_HASH}/linux/${ARCH_PATH}/${APPIMAGE_NAME}"
-    
-    # Log architecture information
-    print_text "${CYAN}${BOLD}[INFO] System Information:${RESET}"
-    print_text "${CYAN}• Architecture: ${RESET}${ARCH}"
-    print_text "${CYAN}• Version: ${RESET}${APP_VERSION}"
-    print_text "${CYAN}• Build: ${RESET}${BUILD_HASH}"
-    print_text "${CYAN}• AppImage: ${RESET}${APPIMAGE_NAME}"
-    print_text "${CYAN}• Download URL: ${RESET}${APPIMAGE_URL}"
-    echo
-}
-
-# Call the function to set architecture-specific variables
-set_arch_specific_vars
-
-INSTALL_DIR="/opt/cursor"
-DESKTOP_FILE="/usr/share/applications/cursor.desktop"
-SYMLINK_PATH="/usr/local/bin/cursor"
-TEMP_DIR="/tmp/cursor-installer"
-CONFIG_FILE="$HOME/.config/Cursor/User/globalStorage/storage.json"
-
-# Colors for UI feedback
+# Define colors for UI feedback
 GREEN="\e[32m"
 YELLOW="\e[33m"
 RED="\e[31m"
@@ -128,6 +81,23 @@ print_box() {
     echo -e "$bottom_border"
 }
 
+# Function to display stylish header
+display_header() {
+    clear
+    local content=(
+        ""
+        "${CYAN}${BOLD}Cursor AI Editor${RESET}"
+        "${CYAN}${BOLD}Installation & Management${RESET}"
+        ""
+        "${CYAN}${BOLD}by Mahesh Technicals${RESET}"
+        "${CYAN}${BOLD}Version 3.0${RESET}"
+        ""
+    )
+    
+    print_box "${content[@]}"
+    echo
+}
+
 # Function to check root permissions
 check_root() {
     if [[ $EUID -ne 0 ]]; then
@@ -136,6 +106,24 @@ check_root() {
         return 1
     fi
     return 0
+}
+
+# Function to create temporary directory
+create_temp_dir() {
+    print_text "${YELLOW}${BOLD}[INFO] Creating temporary directory...${RESET}"
+    mkdir -p "$TEMP_DIR"
+    cd "$TEMP_DIR" || {
+        print_text "${RED}${BOLD}[ERROR] Failed to create or access temporary directory.${RESET}"
+        return 1
+    }
+    return 0
+}
+
+# Function to clean up temporary files
+cleanup() {
+    print_text "${YELLOW}${BOLD}[INFO] Cleaning up temporary files...${RESET}"
+    cd / || true
+    rm -rf "$TEMP_DIR"
 }
 
 # Function to check dependencies
@@ -178,39 +166,72 @@ check_dependencies() {
     return 0
 }
 
-# Function to display stylish header
-display_header() {
-    clear
-    local content=(
-        ""
-        "${CYAN}${BOLD}Cursor AI Editor${RESET}"
-        "${CYAN}${BOLD}Installation & Management${RESET}"
-        ""
-        "${CYAN}${BOLD}by Mahesh Technicals${RESET}"
-        "${CYAN}${BOLD}Version 3.0${RESET}"
-        ""
-    )
+# Define variables
+APP_NAME="Cursor"
+INSTALL_DIR="/opt/cursor"
+DESKTOP_FILE="/usr/share/applications/cursor.desktop"
+SYMLINK_PATH="/usr/local/bin/cursor"
+TEMP_DIR="/tmp/cursor-installer"
+CONFIG_FILE="$HOME/.config/Cursor/User/globalStorage/storage.json"
+
+# These will be set by set_arch_specific_vars
+ARCH=""
+APP_VERSION=""
+ARCH_SUFFIX=""
+ARCH_PATH=""
+BUILD_HASH=""
+APPIMAGE_NAME=""
+APPIMAGE_URL=""
+
+# Initialize script
+initialize_script() {
+    # Display welcome message
+    display_header
     
-    print_box "${content[@]}"
+    # Check dependencies
+    if ! check_dependencies; then
+        print_text "${RED}${BOLD}[ERROR] Missing required dependencies. Please install them and try again.${RESET}"
+        exit 1
+    fi
+    
+    # Detect architecture and set variables
+    set_arch_specific_vars
+    
+    print_text "${GREEN}${BOLD}[SUCCESS] Script initialized successfully!${RESET}"
     echo
 }
 
-# Function to create temporary directory
-create_temp_dir() {
-    print_text "${YELLOW}${BOLD}[INFO] Creating temporary directory...${RESET}"
-    mkdir -p "$TEMP_DIR"
-    cd "$TEMP_DIR" || {
-        print_text "${RED}${BOLD}[ERROR] Failed to create or access temporary directory.${RESET}"
+# Function to verify AppImage integrity
+verify_appimage() {
+    local appimage_path="$1"
+    
+    # Check if file exists and is not empty
+    if [ ! -f "$appimage_path" ] || [ ! -s "$appimage_path" ]; then
+        print_text "${RED}${BOLD}[ERROR] AppImage file is missing or empty${RESET}"
         return 1
-    }
+    fi
+    
+    # Check if file is an AppImage
+    if ! file "$appimage_path" | grep -qi "AppImage\|executable"; then
+        print_text "${RED}${BOLD}[ERROR] File is not a valid AppImage${RESET}"
+        if file "$appimage_path" | grep -q "ASCII text"; then
+            print_text "${YELLOW}File appears to be text (possibly an error page)${RESET}"
+            print_text "${YELLOW}First few lines of the file:${RESET}"
+            head -n 3 "$appimage_path"
+        fi
+        return 1
+    fi
+    
+    # Check file permissions
+    if [ ! -x "$appimage_path" ]; then
+        print_text "${YELLOW}${BOLD}[WARNING] AppImage is not executable, attempting to fix...${RESET}"
+        chmod +x "$appimage_path" || {
+            print_text "${RED}${BOLD}[ERROR] Failed to make AppImage executable${RESET}"
+            return 1
+        }
+    fi
+    
     return 0
-}
-
-# Function to clean up temporary files
-cleanup() {
-    print_text "${YELLOW}${BOLD}[INFO] Cleaning up temporary files...${RESET}"
-    cd / || true
-    rm -rf "$TEMP_DIR"
 }
 
 # Function to check if Cursor is already installed
@@ -248,39 +269,6 @@ show_spinner() {
     printf "         \b\b\b\b\b\b\b\b\b"
 }
 
-# Function to verify AppImage integrity
-verify_appimage() {
-    local appimage_path="$1"
-    
-    # Check if file exists and is not empty
-    if [ ! -f "$appimage_path" ] || [ ! -s "$appimage_path" ]; then
-        print_text "${RED}${BOLD}[ERROR] AppImage file is missing or empty${RESET}"
-        return 1
-    }
-    
-    # Check if file is an AppImage
-    if ! file "$appimage_path" | grep -qi "AppImage\|executable"; then
-        print_text "${RED}${BOLD}[ERROR] File is not a valid AppImage${RESET}"
-        if file "$appimage_path" | grep -q "ASCII text"; then
-            print_text "${YELLOW}File appears to be text (possibly an error page)${RESET}"
-            print_text "${YELLOW}First few lines of the file:${RESET}"
-            head -n 3 "$appimage_path"
-        fi
-        return 1
-    }
-    
-    # Check file permissions
-    if [ ! -x "$appimage_path" ]; then
-        print_text "${YELLOW}${BOLD}[WARNING] AppImage is not executable, attempting to fix...${RESET}"
-        chmod +x "$appimage_path" || {
-            print_text "${RED}${BOLD}[ERROR] Failed to make AppImage executable${RESET}"
-            return 1
-        }
-    fi
-    
-    return 0
-}
-
 # Function to download with progress and retries
 download_with_progress() {
     local url="$1"
@@ -288,18 +276,42 @@ download_with_progress() {
     local max_retries=3
     local retry_count=0
     
+    # Check if URL is valid
+    if [[ -z "$url" || "$url" == "" ]]; then
+        print_text "${RED}${BOLD}[ERROR] Invalid download URL: Empty URL${RESET}"
+        return 1
+    fi
+    
+    print_text "${YELLOW}${BOLD}[INFO] Download URL: $url${RESET}"
+    
     while [ $retry_count -lt $max_retries ]; do
         print_text "${YELLOW}${BOLD}[INFO] Download attempt $((retry_count + 1))/${max_retries}...${RESET}"
         
-        # Try wget first
+        # Try wget first with better error handling
         if command -v wget &>/dev/null; then
-            if wget -q --show-progress -O "$output" "$url"; then
-                return 0
+            if wget -q --show-progress --tries=3 --timeout=15 -O "$output" "$url"; then
+                # Verify file was downloaded successfully
+                if [ -s "$output" ]; then
+                    print_text "${GREEN}${BOLD}[SUCCESS] Download completed successfully${RESET}"
+                    return 0
+                else
+                    print_text "${RED}${BOLD}[ERROR] Downloaded file is empty${RESET}"
+                fi
+            else
+                print_text "${RED}${BOLD}[ERROR] Download failed with wget (Exit code: $?)${RESET}"
             fi
         # Try curl as fallback
         elif command -v curl &>/dev/null; then
-            if curl -L --progress-bar -o "$output" "$url"; then
-                return 0
+            if curl -L --retry 3 --connect-timeout 15 --progress-bar -o "$output" "$url"; then
+                # Verify file was downloaded successfully
+                if [ -s "$output" ]; then
+                    print_text "${GREEN}${BOLD}[SUCCESS] Download completed successfully${RESET}"
+                    return 0
+                else
+                    print_text "${RED}${BOLD}[ERROR] Downloaded file is empty${RESET}"
+                fi
+            else
+                print_text "${RED}${BOLD}[ERROR] Download failed with curl (Exit code: $?)${RESET}"
             fi
         else
             print_text "${RED}${BOLD}[ERROR] Neither wget nor curl is available${RESET}"
@@ -317,6 +329,43 @@ download_with_progress() {
     return 1
 }
 
+# Function to determine architecture and set appropriate version and URL
+set_arch_specific_vars() {
+    # Get the architecture
+    ARCH=$(uname -m)
+    
+    # Detect architecture and set version
+    if [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
+        APP_VERSION="0.47.9"
+        ARCH_SUFFIX="aarch64"
+        ARCH_PATH="arm64"
+        BUILD_HASH="b6fb41b5f36bda05cab7109606e7404a65d1ff32"
+        APPIMAGE_NAME="Cursor-${APP_VERSION}-${ARCH_SUFFIX}.AppImage"
+    elif [[ "$ARCH" == "x86_64" ]]; then
+        APP_VERSION="0.48.6"
+        ARCH_SUFFIX="x86_64"
+        ARCH_PATH="x64"
+        BUILD_HASH="1649e229afdef8fd1d18ea173f063563f1e722ef"
+        APPIMAGE_NAME="Cursor-${APP_VERSION}-${ARCH_SUFFIX}.AppImage"
+    else
+        print_text "${RED}${BOLD}[ERROR] Unsupported architecture: $ARCH${RESET}"
+        print_text "${YELLOW}Supported architectures: x86_64 (64-bit Intel/AMD) and aarch64/arm64${RESET}"
+        exit 1
+    fi
+
+    # Construct the download URL
+    APPIMAGE_URL="https://downloads.cursor.com/production/${BUILD_HASH}/linux/${ARCH_PATH}/${APPIMAGE_NAME}"
+    
+    # Log architecture information
+    print_text "${CYAN}${BOLD}[INFO] System Information:${RESET}"
+    print_text "${CYAN}• Architecture: ${RESET}${ARCH}"
+    print_text "${CYAN}• Version: ${RESET}${APP_VERSION}"
+    print_text "${CYAN}• Build: ${RESET}${BUILD_HASH}"
+    print_text "${CYAN}• AppImage: ${RESET}${APPIMAGE_NAME}"
+    print_text "${CYAN}• Download URL: ${RESET}${APPIMAGE_URL}"
+    echo
+}
+
 # Function to install Cursor
 install_cursor() {
     display_header
@@ -324,16 +373,29 @@ install_cursor() {
     if [ $? -eq 1 ]; then
         return
     fi
-    create_temp_dir
     
-    # Verify architecture and set variables again
+    # Set architecture-specific variables
     set_arch_specific_vars
     
+    create_temp_dir
+    if [ $? -eq 1 ]; then
+        return 1
+    fi
+    
     print_text "${BLUE}${BOLD}[1/5]${RESET} ${YELLOW}Downloading Cursor AI Editor v${APP_VERSION} for ${ARCH}...${RESET}"
+    
+    # Validate URL before download
+    if [[ -z "$APPIMAGE_URL" || "$APPIMAGE_URL" == "" ]]; then
+        print_text "${RED}${BOLD}[ERROR] Invalid download URL. Architecture detection may have failed.${RESET}"
+        print_text "${YELLOW}[DEBUG] ARCH=${ARCH}, APP_VERSION=${APP_VERSION}, APPIMAGE_URL=${APPIMAGE_URL}${RESET}"
+        cleanup
+        return 1
+    fi
     
     # Download with progress and retries
     if ! download_with_progress "$APPIMAGE_URL" "Cursor.AppImage"; then
         print_text "${RED}${BOLD}[ERROR] Failed to download Cursor AppImage${RESET}"
+        print_text "${YELLOW}[DEBUG] URL: ${APPIMAGE_URL}${RESET}"
         cleanup
         return 1
     fi
@@ -346,12 +408,23 @@ install_cursor() {
     fi
     
     print_text "${BLUE}${BOLD}[3/5]${RESET} ${YELLOW}Extracting AppImage...${RESET}"
-    ./Cursor.AppImage --appimage-extract > /dev/null 2>&1 &
-    extraction_pid=$!
-    show_spinner $extraction_pid
+    
+    # Use direct extraction
+    print_text "${YELLOW}${BOLD}[INFO] Extracting AppImage directly...${RESET}"
+    chmod +x Cursor.AppImage
+    if ! ./Cursor.AppImage --appimage-extract; then
+        print_text "${RED}${BOLD}[ERROR] AppImage extraction failed${RESET}"
+        print_text "${YELLOW}[DEBUG] File information:${RESET}"
+        file Cursor.AppImage
+        ls -la Cursor.AppImage
+        cleanup
+        return 1
+    fi
     
     if [[ ! -d "squashfs-root" ]]; then
-        print_text "${RED}${BOLD}[ERROR] AppImage extraction failed${RESET}"
+        print_text "${RED}${BOLD}[ERROR] AppImage extraction failed - no squashfs-root directory${RESET}"
+        print_text "${YELLOW}[DEBUG] Directory listing:${RESET}"
+        ls -la
         cleanup
         return 1
     fi
@@ -969,134 +1042,149 @@ EOF
     fi
 }
 
-# Process command line arguments
-if [[ $# -gt 0 ]]; then
-    check_dependencies || exit 1
-    
-    case "$1" in
-        -r|--reset-ids)
-            # Reset IDs doesn't necessarily need root access
-            if [ -f "$CONFIG_FILE" ] && [ ! -w "$CONFIG_FILE" ]; then
-                print_text "${RED}${BOLD}[ERROR] No write permission for the Cursor config file.${RESET}"
-                print_text "${YELLOW}${BOLD}You may need to run with sudo:${RESET} sudo $0 $1"
-                print_text "${YELLOW}Or change permissions:${RESET} chmod u+w $CONFIG_FILE"
-                exit 1
-            fi
-            reset_request_ids
-            ask_main_menu
-            ;;
-        *)
-            # All other commands require root
-            check_root || exit 1
-            
-            case "$1" in
-                -i|--install)
-                    install_cursor
-                    ask_main_menu
-                    ;;
-                -u|--uninstall)
-                    uninstall_cursor
-                    ask_main_menu
-                    ;;
-                -p|--update)
-                    update_cursor
-                    ask_main_menu
-                    ;;
-                -a|--about)
-                    show_about
-                    ask_main_menu
-                    ;;
-                -h|--help)
-                    show_help
-                    ask_main_menu
-                    ;;
-                *)
-                    echo -e "${RED}[ERROR] Unknown option: $1${RESET}"
-                    show_help
-                    exit 1
-                    ;;
-            esac
-            ;;
-    esac
-fi
-
 # Main menu
-while true; do
-    display_header
-    echo -e "${CYAN}Select an option:${RESET}"
-    echo
-    echo -e "1) ${GREEN}Install${RESET} Cursor AI Editor"
-    echo -e "2) ${RED}Uninstall${RESET} Cursor AI Editor"
-    echo -e "3) ${BLUE}Update${RESET} Cursor AI Editor"
-    echo -e "4) ${MAGENTA}Reset Request ID${RESET}"
-    echo -e "5) ${YELLOW}About${RESET} Cursor AI Editor"
-    echo -e "6) ${MAGENTA}Help${RESET}"
-    echo -e "7) ${CYAN}Exit${RESET}"
-    echo
-    
-    # Input prompt
-    echo -n -e "${CYAN}Enter your choice [1-7]:${RESET} "
-    read -r choice
-    
-    # Check dependencies
-    check_dependencies || continue
-    
-    case "$choice" in
-        1|2|3)
-            # Options that require root access
-            check_root || continue
-            
-            case "$choice" in
-                1)
-                    install_cursor
-                    ask_main_menu
-                    ;;
-                2)
-                    uninstall_cursor
-                    ask_main_menu
-                    ;;
-                3)
-                    update_cursor
-                    ask_main_menu
-                    ;;
-            esac
-            ;;
-        4)
-            # Reset Request ID does not need root
-            # But it needs write access to the config file
-            if [ -f "$CONFIG_FILE" ] && [ ! -w "$CONFIG_FILE" ]; then
-                print_text "${RED}${BOLD}[ERROR] No write permission for the Cursor config file.${RESET}"
-                print_text "${YELLOW}${BOLD}You may need to run with sudo:${RESET} sudo $0"
-                print_text "${YELLOW}Or change permissions:${RESET} chmod u+w $CONFIG_FILE"
-                echo
-                print_text "${YELLOW}Press Enter to continue...${RESET}"
+main_menu() {
+    while true; do
+        display_header
+        echo -e "${CYAN}Select an option:${RESET}"
+        echo
+        echo -e "1) ${GREEN}Install${RESET} Cursor AI Editor"
+        echo -e "2) ${RED}Uninstall${RESET} Cursor AI Editor"
+        echo -e "3) ${BLUE}Update${RESET} Cursor AI Editor"
+        echo -e "4) ${MAGENTA}Reset Request ID${RESET}"
+        echo -e "5) ${YELLOW}About${RESET} Cursor AI Editor"
+        echo -e "6) ${MAGENTA}Help${RESET}"
+        echo -e "7) ${CYAN}Exit${RESET}"
+        echo
+        
+        # Input prompt
+        echo -n -e "${CYAN}Enter your choice [1-7]:${RESET} "
+        read -r choice
+        
+        case "$choice" in
+            1|2|3)
+                # Options that require root access
+                check_root || continue
+                
+                case "$choice" in
+                    1)
+                        install_cursor
+                        ask_main_menu
+                        ;;
+                    2)
+                        uninstall_cursor
+                        ask_main_menu
+                        ;;
+                    3)
+                        update_cursor
+                        ask_main_menu
+                        ;;
+                esac
+                ;;
+            4)
+                # Reset Request ID does not need root
+                # But it needs write access to the config file
+                if [ -f "$CONFIG_FILE" ] && [ ! -w "$CONFIG_FILE" ]; then
+                    print_text "${RED}${BOLD}[ERROR] No write permission for the Cursor config file.${RESET}"
+                    print_text "${YELLOW}${BOLD}You may need to run with sudo:${RESET} sudo $0"
+                    print_text "${YELLOW}Or change permissions:${RESET} chmod u+w $CONFIG_FILE"
+                    echo
+                    print_text "${YELLOW}Press Enter to continue...${RESET}"
+                    read -r
+                    continue
+                fi
+                
+                reset_request_ids
+                ask_main_menu
+                ;;
+            5)
+                show_about
+                ask_main_menu
+                ;;
+            6)
+                clear
+                show_help
+                ask_main_menu
+                ;;
+            7)
+                clear
+                print_text "${GREEN}${BOLD}Thank you for using the Cursor AI Editor installer!${RESET}"
+                print_text "${CYAN}Goodbye!${RESET}"
+                exit 0
+                ;;
+            *)
+                echo -e "${RED}[ERROR] Invalid option!${RESET}"
+                echo -e "${YELLOW}Press Enter to continue...${RESET}"
+                echo -n ""
                 read -r
-                continue
-            fi
-            
-            reset_request_ids
-            ask_main_menu
-            ;;
-        5)
-            show_about
-            ask_main_menu
-            ;;
-        6)
-            clear
-            show_help
-            ask_main_menu
-            ;;
-        7)
-            clear
-            print_text "${GREEN}${BOLD}Thank you for using the Cursor AI Editor installer!${RESET}"
-            print_text "${CYAN}Goodbye!${RESET}"
-            exit 0
-            ;;
-        *)
-            echo -e "${RED}[ERROR] Invalid option!${RESET}"
-            echo -e "${YELLOW}Press Enter to continue...${RESET}"
-            echo -n ""
-            read -r
-            ;;
-    esac
-done
+                ;;
+        esac
+    done
+}
+
+# Main script entry point
+main() {
+    # Process command line arguments
+    if [[ $# -gt 0 ]]; then
+        # Initialize critical functions and dependencies
+        check_dependencies || exit 1
+        
+        case "$1" in
+            -r|--reset-ids)
+                # Reset IDs doesn't necessarily need root access
+                if [ -f "$CONFIG_FILE" ] && [ ! -w "$CONFIG_FILE" ]; then
+                    print_text "${RED}${BOLD}[ERROR] No write permission for the Cursor config file.${RESET}"
+                    print_text "${YELLOW}${BOLD}You may need to run with sudo:${RESET} sudo $0 $1"
+                    print_text "${YELLOW}Or change permissions:${RESET} chmod u+w $CONFIG_FILE"
+                    exit 1
+                fi
+                # Initialize architecture detection
+                set_arch_specific_vars
+                reset_request_ids
+                ask_main_menu
+                ;;
+            *)
+                # All other commands require root
+                check_root || exit 1
+                
+                # Initialize architecture detection
+                set_arch_specific_vars
+                
+                case "$1" in
+                    -i|--install)
+                        install_cursor
+                        ask_main_menu
+                        ;;
+                    -u|--uninstall)
+                        uninstall_cursor
+                        ask_main_menu
+                        ;;
+                    -p|--update)
+                        update_cursor
+                        ask_main_menu
+                        ;;
+                    -a|--about)
+                        show_about
+                        ask_main_menu
+                        ;;
+                    -h|--help)
+                        show_help
+                        ask_main_menu
+                        ;;
+                    *)
+                        echo -e "${RED}[ERROR] Unknown option: $1${RESET}"
+                        show_help
+                        exit 1
+                        ;;
+                esac
+                ;;
+        esac
+    else
+        # No command-line arguments, initialize and show menu
+        initialize_script
+        main_menu
+    fi
+}
+
+# Call main entry point with all arguments
+main "$@"
