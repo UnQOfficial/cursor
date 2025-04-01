@@ -11,19 +11,44 @@
 
 # Define variables
 APP_NAME="Cursor"
-APP_VERSION="0.48.6"
 ARCH=$(uname -m)
-APPIMAGE_URL=""
 
-# Set architecture-specific URL
-if [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
-    APPIMAGE_URL="https://downloads.cursor.com/production/b6fb41b5f36bda05cab7109606e7404a65d1ff32/linux/arm64/Cursor-0.47.9-aarch64.AppImage"
-elif [[ "$ARCH" == "x86_64" ]]; then
-    APPIMAGE_URL="https://downloads.cursor.com/production/1649e229afdef8fd1d18ea173f063563f1e722ef/linux/x64/Cursor-0.48.6-x86_64.AppImage"
-else
-    echo -e "\e[31m[ERROR] Unsupported architecture: $ARCH\e[0m"
-    exit 1
-fi
+# Function to determine architecture and set appropriate version and URL
+set_arch_specific_vars() {
+    # Detect architecture and set version
+    if [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
+        APP_VERSION="0.47.9"
+        ARCH_SUFFIX="aarch64"
+        ARCH_PATH="arm64"
+        BUILD_HASH="b6fb41b5f36bda05cab7109606e7404a65d1ff32"
+        APPIMAGE_NAME="Cursor-${APP_VERSION}-${ARCH_SUFFIX}.AppImage"
+    elif [[ "$ARCH" == "x86_64" ]]; then
+        APP_VERSION="0.48.6"
+        ARCH_SUFFIX="x86_64"
+        ARCH_PATH="x64"
+        BUILD_HASH="1649e229afdef8fd1d18ea173f063563f1e722ef"
+        APPIMAGE_NAME="Cursor-${APP_VERSION}-${ARCH_SUFFIX}.AppImage"
+    else
+        print_text "${RED}${BOLD}[ERROR] Unsupported architecture: $ARCH${RESET}"
+        print_text "${YELLOW}Supported architectures: x86_64 (64-bit Intel/AMD) and aarch64/arm64${RESET}"
+        exit 1
+    fi
+
+    # Construct the download URL
+    APPIMAGE_URL="https://downloads.cursor.com/production/${BUILD_HASH}/linux/${ARCH_PATH}/${APPIMAGE_NAME}"
+    
+    # Log architecture information
+    print_text "${CYAN}${BOLD}[INFO] System Information:${RESET}"
+    print_text "${CYAN}• Architecture: ${RESET}${ARCH}"
+    print_text "${CYAN}• Version: ${RESET}${APP_VERSION}"
+    print_text "${CYAN}• Build: ${RESET}${BUILD_HASH}"
+    print_text "${CYAN}• AppImage: ${RESET}${APPIMAGE_NAME}"
+    print_text "${CYAN}• Download URL: ${RESET}${APPIMAGE_URL}"
+    echo
+}
+
+# Call the function to set architecture-specific variables
+set_arch_specific_vars
 
 INSTALL_DIR="/opt/cursor"
 DESKTOP_FILE="/usr/share/applications/cursor.desktop"
@@ -223,6 +248,75 @@ show_spinner() {
     printf "         \b\b\b\b\b\b\b\b\b"
 }
 
+# Function to verify AppImage integrity
+verify_appimage() {
+    local appimage_path="$1"
+    
+    # Check if file exists and is not empty
+    if [ ! -f "$appimage_path" ] || [ ! -s "$appimage_path" ]; then
+        print_text "${RED}${BOLD}[ERROR] AppImage file is missing or empty${RESET}"
+        return 1
+    }
+    
+    # Check if file is an AppImage
+    if ! file "$appimage_path" | grep -qi "AppImage\|executable"; then
+        print_text "${RED}${BOLD}[ERROR] File is not a valid AppImage${RESET}"
+        if file "$appimage_path" | grep -q "ASCII text"; then
+            print_text "${YELLOW}File appears to be text (possibly an error page)${RESET}"
+            print_text "${YELLOW}First few lines of the file:${RESET}"
+            head -n 3 "$appimage_path"
+        fi
+        return 1
+    }
+    
+    # Check file permissions
+    if [ ! -x "$appimage_path" ]; then
+        print_text "${YELLOW}${BOLD}[WARNING] AppImage is not executable, attempting to fix...${RESET}"
+        chmod +x "$appimage_path" || {
+            print_text "${RED}${BOLD}[ERROR] Failed to make AppImage executable${RESET}"
+            return 1
+        }
+    fi
+    
+    return 0
+}
+
+# Function to download with progress and retries
+download_with_progress() {
+    local url="$1"
+    local output="$2"
+    local max_retries=3
+    local retry_count=0
+    
+    while [ $retry_count -lt $max_retries ]; do
+        print_text "${YELLOW}${BOLD}[INFO] Download attempt $((retry_count + 1))/${max_retries}...${RESET}"
+        
+        # Try wget first
+        if command -v wget &>/dev/null; then
+            if wget -q --show-progress -O "$output" "$url"; then
+                return 0
+            fi
+        # Try curl as fallback
+        elif command -v curl &>/dev/null; then
+            if curl -L --progress-bar -o "$output" "$url"; then
+                return 0
+            fi
+        else
+            print_text "${RED}${BOLD}[ERROR] Neither wget nor curl is available${RESET}"
+            return 1
+        fi
+        
+        retry_count=$((retry_count + 1))
+        if [ $retry_count -lt $max_retries ]; then
+            print_text "${YELLOW}${BOLD}[INFO] Download failed, retrying in 3 seconds...${RESET}"
+            sleep 3
+        fi
+    done
+    
+    print_text "${RED}${BOLD}[ERROR] Download failed after ${max_retries} attempts${RESET}"
+    return 1
+}
+
 # Function to install Cursor
 install_cursor() {
     display_header
@@ -232,38 +326,53 @@ install_cursor() {
     fi
     create_temp_dir
     
-    print_text "${BLUE}${BOLD}[1/4]${RESET} ${YELLOW}Downloading Cursor AI Editor v${APP_VERSION} for ${ARCH}...${RESET}"
-    wget -q --show-progress -O Cursor.AppImage "$APPIMAGE_URL" || {
-        print_text "${RED}${BOLD}[ERROR] Download failed. Please check your internet connection.${RESET}"
-        cleanup
-        return
-    }
+    # Verify architecture and set variables again
+    set_arch_specific_vars
     
-    print_text "${BLUE}${BOLD}[2/4]${RESET} ${YELLOW}Making AppImage executable...${RESET}"
-    chmod +x Cursor.AppImage || {
-        print_text "${RED}${BOLD}[ERROR] Failed to set executable permissions.${RESET}"
-        cleanup
-        return
-    }
+    print_text "${BLUE}${BOLD}[1/5]${RESET} ${YELLOW}Downloading Cursor AI Editor v${APP_VERSION} for ${ARCH}...${RESET}"
     
-    print_text "${BLUE}${BOLD}[3/4]${RESET} ${YELLOW}Extracting AppImage...${RESET}"
+    # Download with progress and retries
+    if ! download_with_progress "$APPIMAGE_URL" "Cursor.AppImage"; then
+        print_text "${RED}${BOLD}[ERROR] Failed to download Cursor AppImage${RESET}"
+        cleanup
+        return 1
+    fi
+    
+    # Verify the downloaded AppImage
+    print_text "${BLUE}${BOLD}[2/5]${RESET} ${YELLOW}Verifying AppImage integrity...${RESET}"
+    if ! verify_appimage "Cursor.AppImage"; then
+        cleanup
+        return 1
+    fi
+    
+    print_text "${BLUE}${BOLD}[3/5]${RESET} ${YELLOW}Extracting AppImage...${RESET}"
     ./Cursor.AppImage --appimage-extract > /dev/null 2>&1 &
     extraction_pid=$!
     show_spinner $extraction_pid
     
     if [[ ! -d "squashfs-root" ]]; then
-        print_text "${RED}${BOLD}[ERROR] Extraction failed.${RESET}"
+        print_text "${RED}${BOLD}[ERROR] AppImage extraction failed${RESET}"
         cleanup
-        return
+        return 1
     fi
     
-    print_text "${BLUE}${BOLD}[4/4]${RESET} ${YELLOW}Installing Cursor system-wide...${RESET}"
-    mkdir -p "$INSTALL_DIR"
-    cp -r squashfs-root/* "$INSTALL_DIR/" || {
-        print_text "${RED}${BOLD}[ERROR] Failed to copy files to installation directory.${RESET}"
+    print_text "${BLUE}${BOLD}[4/5]${RESET} ${YELLOW}Installing Cursor system-wide...${RESET}"
+    
+    # Ensure install directory exists and is writable
+    if ! mkdir -p "$INSTALL_DIR" 2>/dev/null; then
+        print_text "${RED}${BOLD}[ERROR] Failed to create installation directory${RESET}"
+        print_text "${YELLOW}Please ensure you have the required permissions${RESET}"
         cleanup
-        return
-    }
+        return 1
+    fi
+    
+    # Copy files with progress indication
+    print_text "${YELLOW}Copying files to $INSTALL_DIR...${RESET}"
+    if ! cp -r squashfs-root/* "$INSTALL_DIR/"; then
+        print_text "${RED}${BOLD}[ERROR] Failed to copy files to installation directory${RESET}"
+        cleanup
+        return 1
+    fi
     
     # Create symbolic link
     ln -sf "$INSTALL_DIR/AppRun" "$SYMLINK_PATH" || {
