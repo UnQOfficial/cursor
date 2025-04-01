@@ -11,18 +11,19 @@
 
 # Define variables
 APP_NAME="Cursor"
-APP_VERSION="0.48.6"
+APP_VERSION="0.48.6"  # Default version, will be updated by fetch_download_urls
 ARCH=$(uname -m)
 APPIMAGE_URL=""
+VERSION_JSON_URL="https://raw.githubusercontent.com/oslook/cursor-ai-downloads/refs/heads/main/version-history.json"
 
-# Set architecture-specific URL
+# Initialize default URLs based on architecture (these will be updated later)
 if [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
     APPIMAGE_URL="https://downloads.cursor.com/production/1649e229afdef8fd1d18ea173f063563f1e722ef/linux/arm64/Cursor-${APP_VERSION}-aarch64.AppImage"
 elif [[ "$ARCH" == "x86_64" ]]; then
     APPIMAGE_URL="https://downloads.cursor.com/production/1649e229afdef8fd1d18ea173f063563f1e722ef/linux/x64/Cursor-${APP_VERSION}-x86_64.AppImage"
 else
     echo -e "\e[31m[ERROR] Unsupported architecture: $ARCH\e[0m"
-    exit 1
+    # We'll handle this properly later
 fi
 
 INSTALL_DIR="/opt/cursor"
@@ -108,6 +109,8 @@ check_root() {
     if [[ $EUID -ne 0 ]]; then
         print_text "${RED}${BOLD}[ERROR] This script requires root privileges.${RESET}"
         print_text "${YELLOW}Please run with: ${BOLD}sudo $0${RESET}"
+        print_text "${YELLOW}Press Enter to continue...${RESET}"
+        read -r
         return 1
     fi
     return 0
@@ -116,7 +119,7 @@ check_root() {
 # Function to check dependencies
 check_dependencies() {
     local deps=("wget" "grep" "sed" "awk")
-    local optional_deps=("xxd" "jq" "python3")
+    local optional_deps=("xxd" "jq" "python3" "curl")
     local missing_deps=()
     local missing_optional=()
     
@@ -223,6 +226,94 @@ show_spinner() {
     printf "         \b\b\b\b\b\b\b\b\b"
 }
 
+# Function to fetch latest version and download URLs
+fetch_download_urls() {
+    print_text "${YELLOW}${BOLD}[INFO] Fetching latest version information...${RESET}"
+    
+    # Check if curl or wget is available
+    if command -v curl &> /dev/null; then
+        local response=$(curl -s "$VERSION_JSON_URL")
+    elif command -v wget &> /dev/null; then
+        local response=$(wget -qO- "$VERSION_JSON_URL")
+    else
+        print_text "${RED}${BOLD}[ERROR] Neither curl nor wget is available. Please install one of them.${RESET}"
+        # Use default values instead of exiting
+        APP_VERSION="0.48.6"
+        if [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
+            APPIMAGE_URL="https://downloads.cursor.com/production/1649e229afdef8fd1d18ea173f063563f1e722ef/linux/arm64/Cursor-${APP_VERSION}-aarch64.AppImage"
+        elif [[ "$ARCH" == "x86_64" ]]; then
+            APPIMAGE_URL="https://downloads.cursor.com/production/1649e229afdef8fd1d18ea173f063563f1e722ef/linux/x64/Cursor-${APP_VERSION}-x86_64.AppImage"
+        else
+            print_text "${RED}${BOLD}[ERROR] Unsupported architecture: $ARCH${RESET}"
+            return 1
+        fi
+        return 0
+    fi
+    
+    # Check if jq is available for JSON parsing
+    if command -v jq &> /dev/null; then
+        # Parse JSON using jq
+        APP_VERSION=$(echo "$response" | jq -r '.versions[0].version')
+        local linux_arm64_url=$(echo "$response" | jq -r '.versions[0].platforms["linux-arm64"]')
+        local linux_x64_url=$(echo "$response" | jq -r '.versions[0].platforms["linux-x64"]')
+        
+        # Set architecture-specific URL
+        if [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
+            APPIMAGE_URL="$linux_arm64_url"
+        elif [[ "$ARCH" == "x86_64" ]]; then
+            APPIMAGE_URL="$linux_x64_url"
+        else
+            print_text "${RED}${BOLD}[ERROR] Unsupported architecture: $ARCH${RESET}"
+            # Use default values
+            APP_VERSION="0.48.6"
+            if [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
+                APPIMAGE_URL="https://downloads.cursor.com/production/1649e229afdef8fd1d18ea173f063563f1e722ef/linux/arm64/Cursor-${APP_VERSION}-aarch64.AppImage"
+            elif [[ "$ARCH" == "x86_64" ]]; then
+                APPIMAGE_URL="https://downloads.cursor.com/production/1649e229afdef8fd1d18ea173f063563f1e722ef/linux/x64/Cursor-${APP_VERSION}-x86_64.AppImage"
+            fi
+            return 1
+        fi
+    else
+        # Fallback to grep and sed if jq is not available
+        print_text "${YELLOW}${BOLD}[WARNING] jq not found. Using fallback method for JSON parsing.${RESET}"
+        APP_VERSION=$(echo "$response" | grep -o '"version":"[^"]*"' | head -1 | sed 's/"version":"//;s/"//')
+        
+        if [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
+            APPIMAGE_URL=$(echo "$response" | grep -o '"linux-arm64":"[^"]*"' | head -1 | sed 's/"linux-arm64":"//;s/"//')
+        elif [[ "$ARCH" == "x86_64" ]]; then
+            APPIMAGE_URL=$(echo "$response" | grep -o '"linux-x64":"[^"]*"' | head -1 | sed 's/"linux-x64":"//;s/"//')
+        else
+            print_text "${RED}${BOLD}[ERROR] Unsupported architecture: $ARCH${RESET}"
+            # Use default values
+            APP_VERSION="0.48.6"
+            if [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
+                APPIMAGE_URL="https://downloads.cursor.com/production/1649e229afdef8fd1d18ea173f063563f1e722ef/linux/arm64/Cursor-${APP_VERSION}-aarch64.AppImage"
+            elif [[ "$ARCH" == "x86_64" ]]; then
+                APPIMAGE_URL="https://downloads.cursor.com/production/1649e229afdef8fd1d18ea173f063563f1e722ef/linux/x64/Cursor-${APP_VERSION}-x86_64.AppImage"
+            fi
+            return 1
+        fi
+    fi
+    
+    # Verify that we got valid values
+    if [[ -z "$APP_VERSION" || -z "$APPIMAGE_URL" ]]; then
+        print_text "${RED}${BOLD}[ERROR] Failed to fetch version information.${RESET}"
+        print_text "${YELLOW}${BOLD}[INFO] Falling back to default version...${RESET}"
+        APP_VERSION="0.48.6"
+        
+        # Set architecture-specific URL (fallback)
+        if [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
+            APPIMAGE_URL="https://downloads.cursor.com/production/1649e229afdef8fd1d18ea173f063563f1e722ef/linux/arm64/Cursor-${APP_VERSION}-aarch64.AppImage"
+        elif [[ "$ARCH" == "x86_64" ]]; then
+            APPIMAGE_URL="https://downloads.cursor.com/production/1649e229afdef8fd1d18ea173f063563f1e722ef/linux/x64/Cursor-${APP_VERSION}-x86_64.AppImage"
+        fi
+    else
+        print_text "${GREEN}${BOLD}[SUCCESS] Found latest version: ${APP_VERSION}${RESET}"
+    fi
+    
+    return 0
+}
+
 # Function to install Cursor
 install_cursor() {
     display_header
@@ -231,6 +322,9 @@ install_cursor() {
         return
     fi
     create_temp_dir
+    
+    # Fetch latest version and download URLs
+    fetch_download_urls
     
     print_text "${BLUE}${BOLD}[1/4]${RESET} ${YELLOW}Downloading Cursor AI Editor v${APP_VERSION} for ${ARCH}...${RESET}"
     wget -q --show-progress -O Cursor.AppImage "$APPIMAGE_URL" || {
@@ -389,6 +483,9 @@ update_cursor() {
     
     print_text "${YELLOW}${BOLD}[INFO] Checking for updates...${RESET}"
     
+    # Fetch latest version info
+    fetch_download_urls
+    
     # Get installed version
     local installed_version=""
     if [[ -f "$INSTALL_DIR/version" ]]; then
@@ -418,6 +515,9 @@ update_cursor() {
 # Function to show about information
 show_about() {
     display_header
+    
+    # Fetch latest version info
+    fetch_download_urls
     
     print_text "${CYAN}${BOLD}About Cursor AI Editor${RESET}"
     print_text "${CYAN}────────────────────${RESET}"
@@ -930,12 +1030,18 @@ while true; do
     read -r choice
     
     # Check dependencies
-    check_dependencies || continue
+    check_dependencies || { 
+        print_text "${YELLOW}Press Enter to continue...${RESET}"
+        read -r
+        continue
+    }
     
     case "$choice" in
         1|2|3)
             # Options that require root access
-            check_root || continue
+            if ! check_root; then
+                continue
+            fi
             
             case "$choice" in
                 1)
@@ -984,7 +1090,7 @@ while true; do
             exit 0
             ;;
         *)
-            echo -e "${RED}[ERROR] Invalid option!${RESET}"
+            echo -e "${RED}${BOLD}[ERROR] Invalid option!${RESET}"
             echo -e "${YELLOW}Press Enter to continue...${RESET}"
             echo -n ""
             read -r
