@@ -475,7 +475,7 @@ install_cursor() {
     if [[ ! -d "squashfs-root" ]]; then
         print_text "${RED}${BOLD}[ERROR] Extraction failed.${RESET}"
         cleanup
-        return 1
+        return
     fi
     
     print_text "${BLUE}${BOLD}[4/4]${RESET} ${YELLOW}Installing Cursor system-wide...${RESET}"
@@ -663,7 +663,7 @@ update_cursor() {
         print_text "${RED}${BOLD}[ERROR] Extraction failed.${RESET}"
         cleanup
         return 1
-    fi
+    }
     
     print_text "${BLUE}${BOLD}[4/4]${RESET} ${YELLOW}Installing new version...${RESET}"
     
