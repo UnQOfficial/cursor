@@ -1,7 +1,7 @@
 # Cursor AI Editor Installer
 
 <p align="center">
-  <img src="cursor.png" alt="Cursor AI Logo" width="200">
+  <img src="logo.jpg" alt="Cursor AI Logo" width="200">
 </p>
 
 A modern, feature-rich installer script for Cursor AI Editor on Linux systems.
