@@ -26,11 +26,18 @@ else
     # We'll handle this properly later
 fi
 
+# Determine the actual user's home directory even when run with sudo
+if [ "$SUDO_USER" ] && [ "$EUID" -eq 0 ]; then
+    ACTUAL_HOME=$(eval echo ~$SUDO_USER)
+else
+    ACTUAL_HOME=$HOME
+fi
+
 INSTALL_DIR="/opt/cursor"
 DESKTOP_FILE="/usr/share/applications/cursor.desktop"
 SYMLINK_PATH="/usr/local/bin/cursor"
 TEMP_DIR="/tmp/cursor-installer"
-CONFIG_FILE="$HOME/.config/Cursor/User/globalStorage/storage.json"
+CONFIG_FILE="$ACTUAL_HOME/.config/Cursor/User/globalStorage/storage.json"
 
 # Colors for UI feedback
 GREEN="\e[32m"
@@ -756,7 +763,12 @@ fix_storage_json() {
     # Make a backup first - only if no backup exists
     if [ ! -f "${CONFIG_FILE}.bak" ] && [ ! -f "${CONFIG_FILE}.original" ]; then
         print_text "${YELLOW}${BOLD}[INFO] Creating backup of original file...${RESET}"
-        cp "$CONFIG_FILE" "${CONFIG_FILE}.original" 2>/dev/null
+        cp "$CONFIG_FILE" "${CONFIG_FILE}.bak"
+        
+        # Fix backup file ownership if running as root
+        if [ "$SUDO_USER" ] && [ "$EUID" -eq 0 ]; then
+            chown $SUDO_USER:$(id -gn $SUDO_USER) "${CONFIG_FILE}.bak"
+        fi
     else
         print_text "${YELLOW}${BOLD}[INFO] Backup already exists, skipping backup creation...${RESET}"
     fi
@@ -866,6 +878,15 @@ EOF
     print_text "${GREEN}Device ID:     ${RESET}${new_device_id}"
     echo
     
+    # Fix permissions if running as root
+    if [ "$SUDO_USER" ] && [ "$EUID" -eq 0 ]; then
+        chown $SUDO_USER:$(id -gn $SUDO_USER) "$CONFIG_FILE"
+        if [ -f "${CONFIG_FILE}.original" ]; then
+            chown $SUDO_USER:$(id -gn $SUDO_USER) "${CONFIG_FILE}.original"
+        fi
+        print_text "${YELLOW}${BOLD}[INFO] Fixed file ownership for regular user.${RESET}"
+    fi
+    
     # Display backup message based on which backup exists
     if [ -f "${CONFIG_FILE}.bak" ]; then
         print_text "${YELLOW}Backup saved to: ${CONFIG_FILE}.bak${RESET}"
@@ -920,6 +941,11 @@ reset_request_ids() {
     if [ -f "$CONFIG_FILE" ] && [ ! -f "${CONFIG_FILE}.bak" ] && [ ! -f "${CONFIG_FILE}.original" ]; then
         print_text "${YELLOW}${BOLD}[INFO] Creating backup of original file...${RESET}"
         cp "$CONFIG_FILE" "${CONFIG_FILE}.bak"
+        
+        # Fix backup file ownership if running as root
+        if [ "$SUDO_USER" ] && [ "$EUID" -eq 0 ]; then
+            chown $SUDO_USER:$(id -gn $SUDO_USER) "${CONFIG_FILE}.bak"
+        fi
     elif [ -f "${CONFIG_FILE}.bak" ] || [ -f "${CONFIG_FILE}.original" ]; then
         print_text "${YELLOW}${BOLD}[INFO] Backup already exists, skipping backup creation...${RESET}"
     fi
@@ -1028,6 +1054,12 @@ except Exception as e:
 EOF
             
             print_text "${YELLOW}${BOLD}[WARNING] Other settings may have been lost.${RESET}"
+            
+            # Fix permissions if running as root
+            if [ "$SUDO_USER" ] && [ "$EUID" -eq 0 ]; then
+                chown $SUDO_USER:$(id -gn $SUDO_USER) "$CONFIG_FILE"
+                print_text "${YELLOW}${BOLD}[INFO] Fixed file ownership for regular user.${RESET}"
+            fi
             
             # Update message to reflect whether a new backup was created or an existing one exists
             if [ -f "${CONFIG_FILE}.bak" ]; then
