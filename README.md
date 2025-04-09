@@ -65,12 +65,14 @@ Once you're in the Linux environment (Kali or Ubuntu):
    chmod +x cursor.sh
    ```
 
-3. Run the installer:
+3. Run the installer with sudo (for proper system-wide installation):
    ```bash
-   bash cursor.sh
+   sudo bash cursor.sh
    ```
 
 4. Follow the on-screen instructions to complete the installation.
+
+> **Note:** If you get "sudo: command not found", install it first with: `apt update && apt install sudo`
 
 ## Linux Installation Guide
 

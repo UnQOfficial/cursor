@@ -33,17 +33,26 @@ Once you're in your Linux environment (Kali or Ubuntu):
    ```
 
 3. Run the installer:
+   
+   If you are in Ubuntu/Kali as a regular user (recommended):
+   ```bash
+   sudo bash cursor.sh
+   ```
+   
+   If you are already in a root shell (e.g., if you used `sudo -i` or logged in as root):
    ```bash
    bash cursor.sh
    ```
 
 4. Follow the on-screen instructions from the interactive menu.
 
+> **Note**: Using `sudo` is important for proper installation as Cursor needs system-wide access. If you get "command not found" for sudo, you may need to install it first with: `apt update && apt install sudo`
+
 ### Step 4: Starting Cursor on Android
 
 After installation, you'll need to run Cursor from within your Linux environment:
 
-1. Launch Cursor:
+1. Launch Cursor (no sudo needed for launching):
    ```bash
    cursor --no-sandbox
    ```
@@ -82,13 +91,18 @@ sudo bash cursor.sh -i
 
 ### Common Issues on Android
 
-1. **"Command not found" errors**: Make sure you're in the Ubuntu environment by running `proot-distro login ubuntu`.
+1. **"sudo: command not found" error**: Install sudo first:
+   ```bash
+   apt update && apt install sudo
+   ```
 
-2. **Installation fails**: Ensure you have enough free space (at least 1GB recommended).
+2. **Permission denied errors**: Make sure you're using sudo for installation commands.
 
-3. **Black screen when launching**: Try running with the `--no-sandbox` flag.
+3. **Installation fails**: Ensure you have enough free space (at least 1GB recommended).
 
-4. **Performance issues**: Close background apps to free up memory.
+4. **Black screen when launching**: Try running with the `--no-sandbox` flag.
+
+5. **Performance issues**: Close background apps to free up memory.
 
 ### Common Issues on Linux
 
