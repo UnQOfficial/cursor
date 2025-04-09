@@ -44,26 +44,16 @@ This installer provides a seamless way to set up [Cursor AI Editor](https://curs
 ### Setting Up Termux (Prerequisite)
 
 1. Install [Termux from F-Droid](https://f-droid.org/en/packages/com.termux/) (recommended) or Google Play
-2. Open Termux and update packages:
-   ```bash
-   pkg update && pkg upgrade
-   ```
-3. Install required packages:
-   ```bash
-   pkg install proot-distro curl wget
-   ```
-4. Install Ubuntu in Termux:
-   ```bash
-   proot-distro install ubuntu
-   ```
-5. Launch Ubuntu:
-   ```bash
-   proot-distro login ubuntu
-   ```
+
+2. Install a Linux distribution on your Android device using one of these guides:
+   
+   - **Kali Linux (Option 1)**: [How to Install Kali Linux on Android (No Root) 2025](https://maheshtechnicals.com/how-to-install-kali-linux-on-android-no-root-2024/)
+   
+   - **Ubuntu (Option 2, Recommended)**: [How to Install Ubuntu 24.04 on Android Without Root](https://maheshtechnicals.com/how-to-install-ubuntu-24-04-on-android-without-root/)
 
 ### Installing Cursor on Android
 
-Once you're in the Ubuntu environment:
+Once you're in the Linux environment (Kali or Ubuntu):
 
 1. Download the installer script:
    ```bash

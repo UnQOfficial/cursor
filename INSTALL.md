@@ -7,35 +7,20 @@ This document provides comprehensive installation instructions for Cursor AI Edi
 ### Step 1: Install Termux
 
 1. Download and install Termux from [F-Droid](https://f-droid.org/en/packages/com.termux/) (recommended) or Google Play Store.
-2. Open Termux and wait for the initial setup to complete.
 
-### Step 2: Update Termux packages
+### Step 2: Install Linux on Android
 
-```bash
-pkg update && pkg upgrade -y
-```
+Choose one of the following options to install a Linux distribution on your Android device:
 
-### Step 3: Install required packages
+#### Option 1: Install Kali Linux
+Follow this detailed guide: [How to Install Kali Linux on Android (No Root) 2025](https://maheshtechnicals.com/how-to-install-kali-linux-on-android-no-root-2024/)
 
-```bash
-pkg install proot-distro wget curl -y
-```
+#### Option 2: Install Ubuntu (Recommended)
+Follow this detailed guide: [How to Install Ubuntu 24.04 on Android Without Root](https://maheshtechnicals.com/how-to-install-ubuntu-24-04-on-android-without-root/)
 
-### Step 4: Install Ubuntu on Termux
+### Step 3: Install Cursor AI Editor
 
-```bash
-proot-distro install ubuntu
-```
-
-### Step 5: Start Ubuntu
-
-```bash
-proot-distro login ubuntu
-```
-
-### Step 6: Install Cursor AI Editor
-
-Once you're in Ubuntu:
+Once you're in your Linux environment (Kali or Ubuntu):
 
 1. Download the installer script:
    ```bash
@@ -54,16 +39,11 @@ Once you're in Ubuntu:
 
 4. Follow the on-screen instructions from the interactive menu.
 
-### Step 7: Starting Cursor on Android
+### Step 4: Starting Cursor on Android
 
-After installation, you'll need to run Cursor from within the Ubuntu environment:
+After installation, you'll need to run Cursor from within your Linux environment:
 
-1. Start Ubuntu:
-   ```bash
-   proot-distro login ubuntu
-   ```
-
-2. Launch Cursor:
+1. Launch Cursor:
    ```bash
    cursor --no-sandbox
    ```
