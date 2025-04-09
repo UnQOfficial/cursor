@@ -1,19 +1,21 @@
-# Cursor AI Editor Installer for Linux | The Ultimate Setup Tool
+# Cursor AI Editor Installer for Android & Linux | The Ultimate Setup Tool
 
 <p align="center">
-  <img src="logo.jpg" alt="Cursor AI Editor - AI-powered code editor for Linux" width="200">
+  <img src="logo.jpg" alt="Cursor AI Editor - AI-powered code editor for Android and Linux" width="200">
 </p>
 
-> The most comprehensive bash installer script for Cursor AI Editor - the revolutionary AI-powered code editor that helps developers write better code faster on Linux systems (x86_64 & ARM64).
+> The most comprehensive installer script for Cursor AI Editor on Android devices (via Termux) and Linux systems - bringing the revolutionary AI-powered code editor to mobile developers and Linux users alike (supports both ARM64 & x86_64).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Architecture: x86_64 & ARM64](https://img.shields.io/badge/Architecture-x86__64%20%26%20ARM64-blue)](https://github.com/MaheshTechnicals/cursor-installer)
+[![Platform: Android & Linux](https://img.shields.io/badge/Platform-Android%20%26%20Linux-brightgreen)](https://github.com/MaheshTechnicals/cursor-installer)
+[![Architecture: ARM64 & x86_64](https://img.shields.io/badge/Architecture-ARM64%20%26%20x86__64-blue)](https://github.com/MaheshTechnicals/cursor-installer)
 [![Bash Script](https://img.shields.io/badge/Language-Bash-green.svg)](https://github.com/MaheshTechnicals/cursor-installer)
 
 ## 📋 Table of Contents
 - [Overview](#overview)
 - [Key Features](#key-features)
-- [Installation Guide](#installation-guide)
+- [Android Installation Guide](#android-installation-guide)
+- [Linux Installation Guide](#linux-installation-guide)
 - [Command Line Reference](#command-line-reference)
 - [System Requirements](#system-requirements)
 - [Status Information](#status-information)
@@ -24,19 +26,63 @@
 
 ## Overview
 
-This installer provides a seamless way to install, update, and manage [Cursor AI Editor](https://cursor.sh) - the cutting-edge AI-powered code editor that enhances developer productivity with intelligent code completion, debugging assistance, and GitHub Copilot integration. Perfect for developers seeking a modern IDE experience on Linux platforms.
+This installer provides a seamless way to set up [Cursor AI Editor](https://cursor.sh) on Android devices (via Termux) and Linux systems. Cursor is the cutting-edge AI-powered code editor that enhances developer productivity with intelligent code completion, debugging assistance, and GitHub Copilot integration. Now you can enjoy professional coding with AI assistance directly on your Android phone or tablet!
 
 ## Key Features
 
-- 🚀 **One-Click Installation**: Install Cursor AI Editor with a single command on any Linux distribution
-- 🔄 **Zero-Downtime Updates**: Update to the latest version instantly without losing your settings
+- 📱 **Android-First Design**: Specially optimized for Android devices using Termux
+- 🚀 **One-Click Installation**: Install Cursor AI Editor with a single command
+- 🔄 **Zero-Downtime Updates**: Update to the latest version without losing your settings
 - 🧹 **Complete Uninstallation**: Fully remove Cursor with all configurations when no longer needed
-- 🔒 **Enhanced Privacy Controls**: Reset request IDs and telemetry identifiers with a single click
-- 📊 **Real-Time Status Monitoring**: View installation status and version information in an elegant interface
-- 📱 **Cross-Architecture Support**: Optimized for both x86_64 and ARM64 architectures
+- 🔒 **Enhanced Privacy Controls**: Reset request IDs and telemetry with a single click
+- 📊 **Real-Time Status Monitoring**: View installation status and version information
+- ⚙️ **Cross-Platform Compatibility**: Works on both Android (ARM64) and Linux (x86_64)
 - 🔧 **Automatic Dependency Management**: Intelligent detection and installation of required dependencies
 
-## Installation Guide
+## Android Installation Guide
+
+### Setting Up Termux (Prerequisite)
+
+1. Install [Termux from F-Droid](https://f-droid.org/en/packages/com.termux/) (recommended) or Google Play
+2. Open Termux and update packages:
+   ```bash
+   pkg update && pkg upgrade
+   ```
+3. Install required packages:
+   ```bash
+   pkg install proot-distro curl wget
+   ```
+4. Install Ubuntu in Termux:
+   ```bash
+   proot-distro install ubuntu
+   ```
+5. Launch Ubuntu:
+   ```bash
+   proot-distro login ubuntu
+   ```
+
+### Installing Cursor on Android
+
+Once you're in the Ubuntu environment:
+
+1. Download the installer script:
+   ```bash
+   wget https://raw.githubusercontent.com/MaheshTechnicals/cursor-installer/main/cursor.sh
+   ```
+
+2. Make it executable:
+   ```bash
+   chmod +x cursor.sh
+   ```
+
+3. Run the installer:
+   ```bash
+   bash cursor.sh
+   ```
+
+4. Follow the on-screen instructions to complete the installation.
+
+## Linux Installation Guide
 
 ### Quick Install Method
 
@@ -74,10 +120,18 @@ bash cursor.sh -r
 
 ## System Requirements
 
+### For Android:
+- **Device**: Any Android phone or tablet with ARM64 architecture
+- **Android Version**: Android 7.0 or higher recommended
+- **App**: Termux with proot-distro and Ubuntu installed
+- **Storage**: Minimum 1GB free space recommended
+- **RAM**: 3GB or more for optimal performance
+
+### For Linux:
 - **Operating System**: Any modern Linux distribution (Ubuntu, Debian, Fedora, Arch, CentOS, etc.)
 - **Permissions**: Root access (for installation/uninstallation operations)
 - **Dependencies**: Automatically managed (wget, grep, sed, awk)
-- **Architecture**: x86_64 or ARM64 processor
+- **Architecture**: ARM64 or x86_64 processor
 - **Storage**: Minimum 500MB free disk space recommended
 
 ## Status Information
@@ -104,13 +158,17 @@ This command:
 
 ## Troubleshooting Guide
 
-If you encounter installation or usage issues:
+### Android-Specific Issues:
+1. **Termux Errors**: Ensure you have the latest Termux from F-Droid
+2. **proot-distro Issues**: Try `pkg reinstall proot-distro` if encountering problems
+3. **Space Limitations**: Android users may need to clear space or use external storage
+4. **Performance**: Close background apps for better performance on Android devices
 
-1. **Permission Errors**: Ensure you have appropriate root privileges with `sudo`
+### General Issues:
+1. **Permission Errors**: Ensure you have appropriate root privileges when needed
 2. **Network Issues**: Verify internet connectivity for downloading application files
-3. **Architecture Compatibility**: Confirm your system architecture is supported (x86_64 or ARM64)
+3. **Architecture Compatibility**: Confirm your device architecture is supported (ARM64 or x86_64)
 4. **Dependency Problems**: The script will automatically install required dependencies
-5. **Storage Limitations**: Ensure adequate free disk space (minimum 500MB recommended)
 
 ## Copyright and License
 
@@ -124,5 +182,5 @@ Version: 3.0
 ---
 
 <p align="center">
-  <sub>© 2024 Mahesh Technicals. All rights reserved.</sub>
+  <sub>© 2025 Mahesh Technicals. All rights reserved.</sub>
 </p>
