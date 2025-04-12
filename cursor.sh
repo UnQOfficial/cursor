@@ -246,14 +246,10 @@ check_and_get_missing_dependencies() {
     
     if [[ ${#missing_optional[@]} -gt 0 ]]; then
         print_text "${YELLOW}${BOLD}[WARNING] Some optional dependencies are missing: ${missing_optional[*]}${RESET}"
-        print_text "${YELLOW}${BOLD}[INFO] These are recommended but not required. Installing them may improve functionality.${RESET}"
-        print_text "${BLUE}${BOLD}[INFO] Would you like to install the optional dependencies? (y/n):${RESET} "
-        echo -n ""
-        read -r install_optional
-        if [[ "$install_optional" == "y" || "$install_optional" == "Y" ]]; then
-            echo "${missing_optional[@]}"
-            return 2
-        fi
+        print_text "${YELLOW}${BOLD}[INFO] These are recommended but not required. They will not be installed automatically.${RESET}"
+        # Skipping prompt for optional dependencies to avoid blocking the installation
+        # echo "${missing_optional[@]}"
+        # return 2
     fi
     
     print_text "${GREEN}${BOLD}[SUCCESS] All required dependencies are satisfied!${RESET}"
@@ -336,9 +332,9 @@ fetch_download_urls() {
     
     # Check if curl or wget is available
     if command -v curl &> /dev/null; then
-        local response=$(curl -s "$VERSION_JSON_URL")
+        local response=$(curl -s --connect-timeout 10 --max-time 15 "$VERSION_JSON_URL")
     elif command -v wget &> /dev/null; then
-        local response=$(wget -qO- "$VERSION_JSON_URL")
+        local response=$(wget --timeout=10 --tries=2 -qO- "$VERSION_JSON_URL")
     else
         print_text "${RED}${BOLD}[ERROR] Neither curl nor wget is available. Please install one of them.${RESET}"
         # Use default values instead of exiting
@@ -350,6 +346,21 @@ fetch_download_urls() {
         else
             print_text "${RED}${BOLD}[ERROR] Unsupported architecture: $ARCH${RESET}"
             return 1
+        fi
+        return 0
+    fi
+    
+    # Check if we got a valid response
+    if [[ -z "$response" ]]; then
+        print_text "${RED}${BOLD}[ERROR] Failed to get a response from version server.${RESET}"
+        print_text "${YELLOW}${BOLD}[INFO] Falling back to default version...${RESET}"
+        APP_VERSION="0.48.6"
+        
+        # Set architecture-specific URL (fallback)
+        if [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
+            APPIMAGE_URL="https://downloads.cursor.com/production/1649e229afdef8fd1d18ea173f063563f1e722ef/linux/arm64/Cursor-${APP_VERSION}-aarch64.AppImage"
+        elif [[ "$ARCH" == "x86_64" ]]; then
+            APPIMAGE_URL="https://downloads.cursor.com/production/1649e229afdef8fd1d18ea173f063563f1e722ef/linux/x64/Cursor-${APP_VERSION}-x86_64.AppImage"
         fi
         return 0
     fi
@@ -454,10 +465,12 @@ install_cursor() {
     fetch_download_urls
     
     print_text "${BLUE}${BOLD}[1/4]${RESET} ${YELLOW}Downloading Cursor AI Editor v${APP_VERSION} for ${ARCH}...${RESET}"
-    wget -q --show-progress -O Cursor.AppImage "$APPIMAGE_URL" || {
+    wget -q --timeout=30 --tries=3 --show-progress -O Cursor.AppImage "$APPIMAGE_URL" || {
         print_text "${RED}${BOLD}[ERROR] Download failed. Please check your internet connection.${RESET}"
+        print_text "${YELLOW}${BOLD}[INFO] You can try downloading the file manually from:${RESET}"
+        print_text "${CYAN}$APPIMAGE_URL${RESET}"
         cleanup
-        return
+        return 1
     }
     
     print_text "${BLUE}${BOLD}[2/4]${RESET} ${YELLOW}Making AppImage executable...${RESET}"
@@ -470,7 +483,35 @@ install_cursor() {
     print_text "${BLUE}${BOLD}[3/4]${RESET} ${YELLOW}Extracting AppImage...${RESET}"
     ./Cursor.AppImage --appimage-extract > /dev/null 2>&1 &
     extraction_pid=$!
-    show_spinner $extraction_pid
+    
+    # Add a timeout for extraction (120 seconds)
+    local timeout=120
+    local start_time=$(date +%s)
+    local current_time=0
+    local elapsed_time=0
+    local delay=0.1
+    local spinstr='⣾⣽⣻⢿⡿⣟⣯⣷'
+    
+    echo -n ""
+    
+    while ps -p "$extraction_pid" &> /dev/null; do
+        local temp=${spinstr#?}
+        printf " ${CYAN}${BOLD}[%c]${RESET}  " "$spinstr"
+        local spinstr=$temp${spinstr%"$temp"}
+        sleep $delay
+        printf "\b\b\b\b\b\b\b\b\b"
+        
+        current_time=$(date +%s)
+        elapsed_time=$((current_time - start_time))
+        
+        if [ $elapsed_time -gt $timeout ]; then
+            print_text "${RED}${BOLD}[ERROR] Extraction timed out after $timeout seconds.${RESET}"
+            kill -9 $extraction_pid 2>/dev/null || true
+            cleanup
+            return 1
+        fi
+    done
+    printf "         \b\b\b\b\b\b\b\b\b"
     
     if [[ ! -d "squashfs-root" ]]; then
         print_text "${RED}${BOLD}[ERROR] Extraction failed.${RESET}"
@@ -641,8 +682,10 @@ update_cursor() {
     create_temp_dir || return 1
     
     print_text "${BLUE}${BOLD}[1/4]${RESET} ${YELLOW}Downloading Cursor AI Editor v${APP_VERSION} for ${ARCH}...${RESET}"
-    wget -q --show-progress -O Cursor.AppImage "$APPIMAGE_URL" || {
+    wget -q --timeout=30 --tries=3 --show-progress -O Cursor.AppImage "$APPIMAGE_URL" || {
         print_text "${RED}${BOLD}[ERROR] Download failed. Please check your internet connection.${RESET}"
+        print_text "${YELLOW}${BOLD}[INFO] You can try downloading the file manually from:${RESET}"
+        print_text "${CYAN}$APPIMAGE_URL${RESET}"
         cleanup
         return 1
     }
@@ -657,7 +700,35 @@ update_cursor() {
     print_text "${BLUE}${BOLD}[3/4]${RESET} ${YELLOW}Extracting AppImage...${RESET}"
     ./Cursor.AppImage --appimage-extract > /dev/null 2>&1 &
     extraction_pid=$!
-    show_spinner $extraction_pid
+    
+    # Add a timeout for extraction (120 seconds)
+    local timeout=120
+    local start_time=$(date +%s)
+    local current_time=0
+    local elapsed_time=0
+    local delay=0.1
+    local spinstr='⣾⣽⣻⢿⡿⣟⣯⣷'
+    
+    echo -n ""
+    
+    while ps -p "$extraction_pid" &> /dev/null; do
+        local temp=${spinstr#?}
+        printf " ${CYAN}${BOLD}[%c]${RESET}  " "$spinstr"
+        local spinstr=$temp${spinstr%"$temp"}
+        sleep $delay
+        printf "\b\b\b\b\b\b\b\b\b"
+        
+        current_time=$(date +%s)
+        elapsed_time=$((current_time - start_time))
+        
+        if [ $elapsed_time -gt $timeout ]; then
+            print_text "${RED}${BOLD}[ERROR] Extraction timed out after $timeout seconds.${RESET}"
+            kill -9 $extraction_pid 2>/dev/null || true
+            cleanup
+            return 1
+        fi
+    done
+    printf "         \b\b\b\b\b\b\b\b\b"
     
     if [[ ! -d "squashfs-root" ]]; then
         print_text "${RED}${BOLD}[ERROR] Extraction failed.${RESET}"
