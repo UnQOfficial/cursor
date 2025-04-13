@@ -133,24 +133,81 @@ install_dependencies() {
     
     print_text "${YELLOW}${BOLD}[INFO] Installing missing dependencies: ${missing_deps[*]}${RESET}"
     
+    # Try to install dependencies with sudo if we're not already root
+    local use_sudo=""
+    if [[ $EUID -ne 0 ]]; then
+        use_sudo="sudo"
+        print_text "${YELLOW}${BOLD}[INFO] Not running as root, will use sudo for installations${RESET}"
+    fi
+    
     # Detect package manager
     if command -v apt &> /dev/null; then
         print_text "${BLUE}${BOLD}[INFO] Using apt package manager...${RESET}"
-        apt update -qq && apt install -y "${missing_deps[@]}"
+        $use_sudo apt update -qq && $use_sudo apt install -y "${missing_deps[@]}"
+    elif command -v apt-get &> /dev/null; then
+        print_text "${BLUE}${BOLD}[INFO] Using apt-get package manager...${RESET}"
+        $use_sudo apt-get update -qq && $use_sudo apt-get install -y "${missing_deps[@]}"
     elif command -v dnf &> /dev/null; then
         print_text "${BLUE}${BOLD}[INFO] Using dnf package manager...${RESET}"
-        dnf install -y "${missing_deps[@]}"
+        $use_sudo dnf install -y "${missing_deps[@]}"
     elif command -v yum &> /dev/null; then
         print_text "${BLUE}${BOLD}[INFO] Using yum package manager...${RESET}"
-        yum install -y "${missing_deps[@]}"
+        $use_sudo yum install -y "${missing_deps[@]}"
     elif command -v pacman &> /dev/null; then
         print_text "${BLUE}${BOLD}[INFO] Using pacman package manager...${RESET}"
-        pacman -S --noconfirm "${missing_deps[@]}"
+        $use_sudo pacman -Sy --noconfirm "${missing_deps[@]}"
     elif command -v zypper &> /dev/null; then
         print_text "${BLUE}${BOLD}[INFO] Using zypper package manager...${RESET}"
-        zypper install -y "${missing_deps[@]}"
+        $use_sudo zypper install -y "${missing_deps[@]}"
+    elif command -v pkg &> /dev/null; then 
+        print_text "${BLUE}${BOLD}[INFO] Using pkg package manager (FreeBSD)...${RESET}"
+        $use_sudo pkg install -y "${missing_deps[@]}"
+    elif command -v apk &> /dev/null; then
+        print_text "${BLUE}${BOLD}[INFO] Using apk package manager (Alpine)...${RESET}"
+        $use_sudo apk add "${missing_deps[@]}"
+    elif command -v proot &> /dev/null || [[ -n "$ANDROID_ROOT" ]] || [[ -n "$TERMUX_VERSION" ]]; then
+        # Special case for Termux/PRoot environments
+        print_text "${BLUE}${BOLD}[INFO] Detected Termux/PRoot environment...${RESET}"
+        if command -v pkg &> /dev/null; then
+            # First update package lists
+            pkg update
+            # Install packages one by one to better handle errors
+            for dep in "${missing_deps[@]}"; do
+                print_text "${YELLOW}${BOLD}[INFO] Installing $dep...${RESET}"
+                if ! pkg install -y "$dep"; then
+                    # If jq fails to install with pkg, try with pip
+                    if [[ "$dep" == "jq" ]]; then
+                        print_text "${YELLOW}${BOLD}[INFO] Trying alternative installation method for jq...${RESET}"
+                        pkg install -y python-pip
+                        pip install jq
+                    fi
+                fi
+            done
+        elif command -v apt &> /dev/null; then
+            apt update
+            for dep in "${missing_deps[@]}"; do
+                apt install -y "$dep"
+                # If jq fails to install with apt, try with pip
+                if [[ "$dep" == "jq" ]] && ! command -v jq &> /dev/null; then
+                    print_text "${YELLOW}${BOLD}[INFO] Trying alternative installation method for jq...${RESET}"
+                    apt install -y python-pip
+                    pip install jq
+                fi
+            done
+        else
+            print_text "${RED}${BOLD}[ERROR] Could not find a suitable package manager in Termux.${RESET}"
+            print_text "${YELLOW}Please install the following dependencies manually: ${missing_deps[*]}${RESET}"
+            print_text "${YELLOW}Press Enter to continue...${RESET}"
+            read -r
+            return 1
+        fi
     else
         print_text "${RED}${BOLD}[ERROR] Could not detect package manager. Please install the following dependencies manually: ${missing_deps[*]}${RESET}"
+        print_text "${YELLOW}${BOLD}[INFO] For most common distributions:${RESET}"
+        print_text "       Debian/Ubuntu: ${BOLD}apt install ${missing_deps[*]}${RESET}"
+        print_text "       Fedora/RHEL: ${BOLD}dnf install ${missing_deps[*]}${RESET}"
+        print_text "       Arch Linux: ${BOLD}pacman -S ${missing_deps[*]}${RESET}"
+        print_text "       Alpine: ${BOLD}apk add ${missing_deps[*]}${RESET}"
         print_text "${YELLOW}Press Enter to continue...${RESET}"
         read -r
         return 1
@@ -166,20 +223,102 @@ install_dependencies() {
     
     if [[ ${#still_missing[@]} -gt 0 ]]; then
         print_text "${RED}${BOLD}[ERROR] Failed to install some dependencies: ${still_missing[*]}${RESET}"
-        print_text "${YELLOW}Please install them manually.${RESET}"
-        print_text "${YELLOW}Press Enter to continue...${RESET}"
-        read -r
-        return 1
+        print_text "${YELLOW}${BOLD}[INFO] Attempting to install with alternative package names...${RESET}"
+        
+        # Second attempt with alternative package names
+        local alt_packages=()
+        for dep in "${still_missing[@]}"; do
+            case "$dep" in
+                jq)
+                    if command -v apt &> /dev/null || command -v apt-get &> /dev/null; then
+                        alt_packages+=("jq" "libjq1" "libjq-dev")
+                    elif command -v dnf &> /dev/null || command -v yum &> /dev/null; then
+                        alt_packages+=("jq" "jq-devel")
+                    elif command -v pacman &> /dev/null; then
+                        alt_packages+=("jq")
+                    elif command -v apk &> /dev/null; then
+                        alt_packages+=("jq")
+                    else
+                        alt_packages+=("jq")
+                    fi
+                    ;;
+                wget)
+                    alt_packages+=("wget" "wget2")
+                    ;;
+                *)
+                    alt_packages+=("$dep")
+                    ;;
+            esac
+        done
+        
+        # Try to install alternative packages
+        if command -v apt &> /dev/null || command -v apt-get &> /dev/null; then
+            $use_sudo apt install -y "${alt_packages[@]}" || $use_sudo apt-get install -y "${alt_packages[@]}"
+        elif command -v dnf &> /dev/null; then
+            $use_sudo dnf install -y "${alt_packages[@]}"
+        elif command -v pacman &> /dev/null; then
+            $use_sudo pacman -S --noconfirm "${alt_packages[@]}"
+        fi
+        
+        # Re-check if still missing
+        still_missing=()
+        for dep in "${missing_deps[@]}"; do
+            if ! command -v "$dep" &> /dev/null; then
+                still_missing+=("$dep")
+            fi
+        done
+        
+        if [[ ${#still_missing[@]} -gt 0 ]]; then
+            print_text "${RED}${BOLD}[ERROR] Still failed to install some dependencies: ${still_missing[*]}${RESET}"
+            print_text "${YELLOW}Please install them manually and run the script again.${RESET}"
+            print_text "${YELLOW}Press Enter to continue...${RESET}"
+            read -r
+            return 1
+        fi
     fi
     
     print_text "${GREEN}${BOLD}[SUCCESS] All dependencies installed successfully!${RESET}"
+    
+    # Special verification for jq
+    if ! command -v jq &> /dev/null; then
+        print_text "${YELLOW}${BOLD}[WARNING] jq still not found after installation attempts.${RESET}"
+        print_text "${YELLOW}${BOLD}[INFO] Will try one more alternative method...${RESET}"
+        
+        # Try to install jq via npm if node is available
+        if command -v node &> /dev/null || command -v nodejs &> /dev/null; then
+            if command -v npm &> /dev/null; then
+                print_text "${BLUE}${BOLD}[INFO] Attempting to install jq via npm...${RESET}"
+                $use_sudo npm install -g node-jq
+                # Create a symlink if node-jq was installed but jq command is not available
+                if [ -f "$(npm root -g)/node-jq/bin/jq" ] && ! command -v jq &> /dev/null; then
+                    $use_sudo ln -sf "$(npm root -g)/node-jq/bin/jq" /usr/local/bin/jq
+                fi
+            fi
+        # Try to install via pip if python is available
+        elif command -v python3 &> /dev/null || command -v python &> /dev/null; then
+            if command -v pip &> /dev/null || command -v pip3 &> /dev/null; then
+                print_text "${BLUE}${BOLD}[INFO] Attempting to install jq via pip...${RESET}"
+                $use_sudo pip install jq || $use_sudo pip3 install jq
+            fi
+        fi
+        
+        # Final check if jq is available
+        if ! command -v jq &> /dev/null; then
+            print_text "${YELLOW}${BOLD}[WARNING] Could not install jq automatically.${RESET}"
+            print_text "${YELLOW}${BOLD}[INFO] The script will continue, but some features may not work properly.${RESET}"
+            print_text "${YELLOW}${BOLD}[INFO] For better functionality, please install jq manually later.${RESET}"
+        else
+            print_text "${GREEN}${BOLD}[SUCCESS] Successfully installed jq using alternative method!${RESET}"
+        fi
+    fi
+    
     return 0
 }
 
 # Function to check dependencies
 check_dependencies() {
-    local deps=("wget" "grep" "sed" "awk")
-    local optional_deps=("xxd" "jq" "python3" "curl")
+    local deps=("wget" "grep" "sed" "awk" "jq")
+    local optional_deps=("xxd" "python3" "curl")
     local missing_deps=()
     local missing_optional=()
     
@@ -218,8 +357,8 @@ check_dependencies() {
 
 # Enhanced check_dependencies function that returns the missing dependencies for auto-install
 check_and_get_missing_dependencies() {
-    local deps=("wget" "grep" "sed" "awk")
-    local optional_deps=("xxd" "jq" "python3" "curl")
+    local deps=("wget" "grep" "sed" "awk" "jq")
+    local optional_deps=("xxd" "python3" "curl")
     local missing_deps=()
     local missing_optional=()
     
@@ -433,27 +572,136 @@ fetch_download_urls() {
 install_cursor() {
     display_header
     
-    # Check and install missing dependencies automatically
-    local missing_deps
-    missing_deps=$(check_and_get_missing_dependencies)
-    local check_result=$?
+    # Define sudo usage if not running as root
+    local use_sudo=""
+    if [[ $EUID -ne 0 ]]; then
+        use_sudo="sudo"
+        print_text "${YELLOW}${BOLD}[INFO] Not running as root, will use sudo for installations${RESET}"
+    fi
     
-    if [[ $check_result -eq 1 ]]; then
+    # Check for missing dependencies first
+    print_text "${YELLOW}${BOLD}[INFO] Checking for dependencies...${RESET}"
+    local deps=("wget" "grep" "sed" "awk" "jq")
+    local missing_deps=()
+    
+    for dep in "${deps[@]}"; do
+        if ! command -v "$dep" &> /dev/null; then
+            missing_deps+=("$dep")
+        fi
+    done
+    
+    if [[ ${#missing_deps[@]} -gt 0 ]]; then
         # Install required missing dependencies
-        print_text "${YELLOW}${BOLD}[INFO] Installing required dependencies...${RESET}"
-        if ! install_dependencies $missing_deps; then
+        print_text "${YELLOW}${BOLD}[INFO] Installing required dependencies: ${missing_deps[*]}${RESET}"
+        if ! install_dependencies "${missing_deps[@]}"; then
             print_text "${RED}${BOLD}[ERROR] Failed to install required dependencies. Installation aborted.${RESET}"
             print_text "${YELLOW}Please install them manually and try again.${RESET}"
             print_text "${YELLOW}Press Enter to return to the main menu...${RESET}"
             read -r
             return 1
         fi
-    elif [[ $check_result -eq 2 ]]; then
-        # Install optional dependencies
-        print_text "${YELLOW}${BOLD}[INFO] Installing optional dependencies...${RESET}"
-        install_dependencies $missing_deps
+    fi
+    
+    # Also check for optional dependencies and install them
+    print_text "${YELLOW}${BOLD}[INFO] Checking for optional dependencies...${RESET}"
+    local optional_deps=("xxd" "python3" "curl")
+    local missing_optional=()
+    
+    for dep in "${optional_deps[@]}"; do
+        if ! command -v "$dep" &> /dev/null; then
+            missing_optional+=("$dep")
+        fi
+    done
+    
+    if [[ ${#missing_optional[@]} -gt 0 ]]; then
+        print_text "${YELLOW}${BOLD}[INFO] Installing optional dependencies: ${missing_optional[*]}${RESET}"
+        install_dependencies "${missing_optional[@]}"
         # Continue even if optional dependencies fail
     fi
+    
+    # After all dependencies are installed, check specifically for jq
+    if ! command -v jq &> /dev/null; then
+        print_text "${YELLOW}${BOLD}[INFO] jq installation not detected. Trying direct installation methods...${RESET}"
+        
+        # Try different methods based on detected package managers
+        if command -v apt &> /dev/null; then
+            print_text "${BLUE}${BOLD}[INFO] Using apt package manager...${RESET}"
+            $use_sudo apt update && $use_sudo apt install -y jq
+        elif command -v apt-get &> /dev/null; then
+            print_text "${BLUE}${BOLD}[INFO] Using apt-get package manager...${RESET}"
+            $use_sudo apt-get update && $use_sudo apt-get install -y jq
+        elif command -v dnf &> /dev/null; then
+            print_text "${BLUE}${BOLD}[INFO] Using dnf package manager...${RESET}"
+            $use_sudo dnf install -y jq
+        elif command -v yum &> /dev/null; then
+            print_text "${BLUE}${BOLD}[INFO] Using yum package manager...${RESET}"
+            $use_sudo yum install -y jq
+        elif command -v pacman &> /dev/null; then
+            print_text "${BLUE}${BOLD}[INFO] Using pacman package manager...${RESET}"
+            $use_sudo pacman -Sy --noconfirm jq
+        elif command -v pkg &> /dev/null; then
+            print_text "${BLUE}${BOLD}[INFO] Using pkg package manager...${RESET}"
+            pkg update && pkg install -y jq
+        elif command -v apk &> /dev/null; then
+            print_text "${BLUE}${BOLD}[INFO] Using apk package manager...${RESET}"
+            $use_sudo apk add jq
+        else
+            # Fallback to manual method for Termux PRoot
+            if [[ -d "/data/data/com.termux" ]] || [[ -n "$TERMUX_VERSION" ]]; then
+                print_text "${BLUE}${BOLD}[INFO] Detected Termux environment...${RESET}"
+                pkg update && pkg install -y jq || {
+                    apt update && apt install -y jq
+                }
+                
+                # If still not installed, try downloading a pre-built binary
+                if ! command -v jq &> /dev/null; then
+                    print_text "${YELLOW}${BOLD}[INFO] Package installation failed. Trying to download pre-built binary...${RESET}"
+                    
+                    # Create bin directory if it doesn't exist
+                    mkdir -p "$HOME/bin"
+                    
+                    # Download pre-built jq binary for ARM
+                    if [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
+                        wget -q --timeout=30 --tries=3 -O "$HOME/bin/jq" "https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux-arm64" || \
+                        curl -L --connect-timeout 30 -o "$HOME/bin/jq" "https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux-arm64"
+                    else # Assume x86_64
+                        wget -q --timeout=30 --tries=3 -O "$HOME/bin/jq" "https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64" || \
+                        curl -L --connect-timeout 30 -o "$HOME/bin/jq" "https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64"
+                    fi
+                    
+                    # Make it executable
+                    chmod +x "$HOME/bin/jq"
+                    
+                    # Add to PATH if not already there
+                    if [[ ":$PATH:" != *":$HOME/bin:"* ]]; then
+                        export PATH="$HOME/bin:$PATH"
+                    fi
+                    
+                    # Create .bashrc if it doesn't exist
+                    if [ ! -f "$HOME/.bashrc" ]; then
+                        touch "$HOME/.bashrc"
+                    fi
+                    
+                    # Add to .bashrc if not already there
+                    if ! grep -q "export PATH=\"\$HOME/bin:\$PATH\"" "$HOME/.bashrc"; then
+                        echo 'export PATH="$HOME/bin:$PATH"' >> "$HOME/.bashrc"
+                    fi
+                fi
+            fi
+        fi
+        
+        # Check if jq is now available
+        if ! command -v jq &> /dev/null; then
+            print_text "${YELLOW}${BOLD}[WARNING] Could not install jq automatically.${RESET}"
+            print_text "${YELLOW}${BOLD}[INFO] The script will continue, but some features may not work properly.${RESET}"
+            print_text "${YELLOW}${BOLD}[INFO] Please install jq manually using your package manager.${RESET}"
+        else
+            print_text "${GREEN}${BOLD}[SUCCESS] Successfully installed jq!${RESET}"
+        fi
+    fi
+    
+    # After all dependencies are installed, proceed with installation
+    print_text "${GREEN}${BOLD}[SUCCESS] All dependencies are satisfied. Proceeding with installation...${RESET}"
     
     check_installation
     if [ $? -eq 1 ]; then
@@ -1410,9 +1658,7 @@ display_status_table() {
 }
 
 # Process command line arguments
-if [[ $# -gt 0 ]]; then
-    check_dependencies || exit 1
-    
+if [[ $# -gt 0 ]]; then    
     case "$1" in
         -r|--reset-ids)
             # Reset IDs doesn't necessarily need root access
@@ -1431,6 +1677,7 @@ if [[ $# -gt 0 ]]; then
             
             case "$1" in
                 -i|--install)
+                    # Call the install_cursor function which handles dependency checks and installation
                     install_cursor
                     ask_main_menu
                     ;;
@@ -1485,13 +1732,6 @@ while true; do
     echo -n -e "${CYAN}Enter your choice [1-7]:${RESET} "
     read -r choice
     
-    # Check dependencies
-    check_dependencies || { 
-        print_text "${YELLOW}Press Enter to continue...${RESET}"
-        read -r
-        continue
-    }
-    
     case "$choice" in
         1|2|3)
             # Options that require root access
@@ -1501,6 +1741,7 @@ while true; do
             
             case "$choice" in
                 1)
+                    # Call the install_cursor function which handles dependency checks and installation
                     install_cursor
                     ask_main_menu
                     ;;
