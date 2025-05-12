@@ -57,7 +57,7 @@ Once you're in the Linux environment (Kali or Ubuntu):
 
 1. Download the installer script:
    ```bash
-   wget https://raw.githubusercontent.com/MaheshTechnicals/cursor-installer/main/cursor.sh
+   wget https://raw.githubusercontent.com/MaheshTechnicals/cursor-free-vip-termux/refs/heads/main/cursor.sh
    ```
 
 2. Make it executable:
