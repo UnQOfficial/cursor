@@ -6,14 +6,7 @@
 
 > The most comprehensive installer script for Cursor AI Editor on Android devices (via Termux) and Linux systems - bringing the revolutionary AI-powered code editor to mobile developers and Linux users alike (supports both ARM64 & x86_64).
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Platform: Android & Linux](https://img.shields.io/badge/Platform-Android%20%26%20Linux-brightgreen)](https://github.com/MaheshTechnicals/cursor-installer)
-[![Architecture: ARM64 & x86_64](https://img.shields.io/badge/Architecture-ARM64%20%26%20x86__64-blue)](https://github.com/MaheshTechnicals/cursor-installer)
-[![Bash Script](https://img.shields.io/badge/Language-Bash-green.svg)](https://github.com/MaheshTechnicals/cursor-installer)
-
-## 📋 Table of Contents
-- [Overview](#overview)
-- [Key Features](#key-features)
+[](https://opensource.org/licenses/MIT//img.shields.io/badge/Platformes](#key-features)
 - [Android Installation Guide](#android-installation-guide)
 - [Linux Installation Guide](#linux-installation-guide)
 - [Command Line Reference](#command-line-reference)
@@ -32,12 +25,15 @@ This installer provides a seamless way to set up [Cursor AI Editor](https://curs
 
 - 📱 **Android-First Design**: Specially optimized for Android devices using Termux
 - 🚀 **One-Click Installation**: Install Cursor AI Editor with a single command
+- ⚡ **Auto Install Mode**: Silent installation without prompts for automation
 - 🔄 **Zero-Downtime Updates**: Update to the latest version without losing your settings
 - 🧹 **Complete Uninstallation**: Fully remove Cursor with all configurations when no longer needed
 - 🔒 **Enhanced Privacy Controls**: Reset request IDs and telemetry with a single click
 - 📊 **Real-Time Status Monitoring**: View installation status and version information
 - ⚙️ **Cross-Platform Compatibility**: Works on both Android (ARM64) and Linux (x86_64)
 - 🔧 **Automatic Dependency Management**: Intelligent detection and installation of required dependencies
+- 🎨 **Enhanced Visual Design**: Professional ASCII art banner with terminal-optimized display
+- 📈 **Advanced Progress Tracking**: Real-time progress bars and status indicators
 
 ## Android Installation Guide
 
@@ -47,9 +43,9 @@ This installer provides a seamless way to set up [Cursor AI Editor](https://curs
 
 2. Install a Linux distribution on your Android device using one of these guides:
    
-   - **Kali Linux (Option 1)**: [How to Install Kali Linux on Android (No Root) 2025](https://maheshtechnicals.com/how-to-install-kali-linux-on-android-no-root-2024/)
+   - **Kali Linux (Option 1)**: [To Install Kali Linux on Android (No Root) 2025](https://www.kali.org/docs/nethunter/nethunter-rootless/)
    
-   - **Ubuntu (Option 2, Recommended)**: [How to Install Ubuntu 24.04 on Android Without Root](https://maheshtechnicals.com/how-to-install-ubuntu-24-04-on-android-without-root/)
+   - **Ubuntu (Option 2, Recommended)**: [To Install Ubuntu on Android Without Root](https.//github.com/UnQOfficial/ubuntu/)
 
 ### Installing Cursor on Android
 
@@ -57,7 +53,7 @@ Once you're in the Linux environment (Kali or Ubuntu):
 
 1. Download the installer script:
    ```bash
-   wget https://raw.githubusercontent.com/MaheshTechnicals/cursor-free-vip-termux/refs/heads/main/cursor.sh
+   wget https://raw.githubusercontent.com/UnQOfficial/cursor/refs/heads/main/cursor.sh
    ```
 
 2. Make it executable:
@@ -84,23 +80,37 @@ For fast installation with interactive menu:
 sudo bash cursor.sh
 ```
 
+### Auto Install Method (No Prompts)
+
+For automated installation without any user interaction:
+
+```bash
+sudo bash cursor.sh -a
+```
+
 ### Command Line Reference
 
 ```
 Usage: cursor.sh [OPTION]
 
 Options:
-  -i, --install     Install Cursor AI Editor with automatic dependency resolution
-  -u, --uninstall   Completely remove Cursor AI Editor from your system
-  -p, --update      Update to the latest Cursor AI Editor version
-  -r, --reset-ids   Reset Cursor telemetry & request IDs for enhanced privacy
-  -a, --about       Show detailed information about Cursor AI Editor
-  -h, --help        Display this comprehensive help message
+  -a, --auto-install  Auto install Cursor (no prompts, direct installation)
+  -i, --install       Install Cursor AI Editor with automatic dependency resolution
+  -u, --uninstall     Completely remove Cursor AI Editor from your system
+  -p, --update        Update to the latest Cursor AI Editor version
+  -r, --reset-ids     Reset Cursor telemetry & request IDs for enhanced privacy
+  --about             Show detailed information about Cursor AI Editor
+  -h, --help          Display this comprehensive help message
 ```
 
 #### Practical Examples
 
-Install Cursor AI Editor directly:
+Auto install Cursor AI Editor (perfect for automation):
+```bash
+sudo bash cursor.sh -a
+```
+
+Install Cursor AI Editor interactively:
 ```bash
 sudo bash cursor.sh -i
 ```
@@ -108,6 +118,11 @@ sudo bash cursor.sh -i
 Reset your request IDs for improved privacy (no root required):
 ```bash
 bash cursor.sh -r
+```
+
+Update to the latest version:
+```bash
+sudo bash cursor.sh -p
 ```
 
 ## System Requirements
@@ -122,7 +137,7 @@ bash cursor.sh -r
 ### For Linux:
 - **Operating System**: Any modern Linux distribution (Ubuntu, Debian, Fedora, Arch, CentOS, etc.)
 - **Permissions**: Root access (for installation/uninstallation operations)
-- **Dependencies**: Automatically managed (wget, grep, sed, awk)
+- **Dependencies**: Automatically managed (wget, grep, sed, awk, jq)
 - **Architecture**: ARM64 or x86_64 processor
 - **Storage**: Minimum 500MB free disk space recommended
 
@@ -133,6 +148,7 @@ The installer features an innovative status dashboard that displays:
 - Currently installed version with update availability check
 - Latest available version from official repositories
 - Color-coded status indicators for better visibility
+- System architecture compatibility information
 
 ## Enhanced Privacy Controls
 
@@ -162,17 +178,53 @@ This command:
 3. **Architecture Compatibility**: Confirm your device architecture is supported (ARM64 or x86_64)
 4. **Dependency Problems**: The script will automatically install required dependencies
 
+### Common Solutions:
+```bash
+# Fix dependency issues
+sudo bash cursor.sh -i
+
+# Reset configuration if having issues
+bash cursor.sh -r
+
+# Check installation status
+sudo bash cursor.sh --about
+```
+
+## Advanced Features
+
+### Professional ASCII Banner
+The installer features a stunning UnQ ASCII art banner that automatically centers itself based on your terminal width for optimal visual experience.
+
+### Smart Progress Tracking
+Real-time progress bars show exactly what's happening during installation, extraction, and configuration phases.
+
+### Automatic Fallback
+If the latest version can't be fetched, the installer automatically falls back to a stable default version to ensure successful installation.
+
 ## Copyright and License
 
 This script is provided under the MIT License - free to use, modify and distribute.
 
 ## About the Developer
 
-Developed with ❤️ by Mahesh Technicals  
-Version: 3.0
+Developed with ❤️ by **Sandeep Gaddam**  
+**Version:** 4.1 - Professional Edition  
+**Enhanced by:** UnQ AI  
 
----
+### Connect with the Developer
+- GitHub: [@UnQOfficial](https://github.com/UnQOfficial)
+- Repository: [UnQOfficial/cursor](https://github.com/UnQOfficial/cursor)
+
+***
 
 <p align="center">
-  <sub>© 2025 Mahesh Technicals. All rights reserved.</sub>
+  <sub>© 2025 Sandeep Gaddam (UnQ). All rights reserved.</sub>
 </p>
+
+### Contributing
+
+We welcome contributions! Please feel free to submit issues, feature requests, or pull requests to make this installer even better.
+
+### Star the Repository ⭐
+
+If this installer helped you set up Cursor AI Editor successfully, please consider starring the repository to show your support!
