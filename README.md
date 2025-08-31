@@ -1,12 +1,28 @@
 # Cursor AI Editor Installer for Android & Linux | The Ultimate Setup Tool
 
+<div align="center">
+  
+  
+  
+  
+  
+  
+  
+  **The most comprehensive installer script for Cursor AI Editor on Android devices (via Termux) and Linux systems**
+  
+  *Bringing the revolutionary AI-powered code editor to mobile developers and Linux users alike (supports both ARM64 & x86_64)*
+
+</div>
+
 <p align="center">
   <img src="logo.jpg" alt="Cursor AI Editor - AI-powered code editor for Android and Linux" width="200">
 </p>
 
-> The most comprehensive installer script for Cursor AI Editor on Android devices (via Termux) and Linux systems - bringing the revolutionary AI-powered code editor to mobile developers and Linux users alike (supports both ARM64 & x86_64).
-
-[](https://opensource.org/licenses/MIT//img.shields.io/badge/Platformes](#key-features)
+<div align="center">
+  
+  [](https://github.com/UnQOfficial/cursor/releases//stars/UnQOfficial/thub/issues/UnQOffew](#overview)
+- [Key Features](#key-features)
+- [🚀 Quick Installation](#-quick-installation)
 - [Android Installation Guide](#android-installation-guide)
 - [Linux Installation Guide](#linux-installation-guide)
 - [Command Line Reference](#command-line-reference)
@@ -35,6 +51,68 @@ This installer provides a seamless way to set up [Cursor AI Editor](https://curs
 - 🎨 **Enhanced Visual Design**: Professional ASCII art banner with terminal-optimized display
 - 📈 **Advanced Progress Tracking**: Real-time progress bars and status indicators
 
+***
+
+## 🚀 Quick Installation
+
+### ⚡ **Auto Install** (Fastest - No Prompts)
+
+```bash
+# Download and auto-install in one command
+curl -fsSL https://raw.githubusercontent.com/UnQOfficial/cursor/main/cursor.sh | sudo bash -s -- -a
+```
+
+### 🔥 **One-Line Install** (Interactive)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/UnQOfficial/cursor/main/cursor.sh | bash
+```
+
+### 📦 **Manual Installation**
+
+<details>
+<summary><b>Click to expand manual installation steps</b></summary>
+
+#### Step 1: Download the Installer
+```bash
+# Download the professional installer script
+curl -L -o cursor.sh https://raw.githubusercontent.com/UnQOfficial/cursor/main/cursor.sh
+```
+
+#### Step 2: Make Executable
+```bash
+# Make the script executable
+chmod +x cursor.sh
+```
+
+#### Step 3: Run Installer
+```bash
+# Launch the professional installer (interactive menu)
+sudo ./cursor.sh
+
+# OR Auto install without prompts
+sudo ./cursor.sh -a
+```
+
+</details>
+
+### 🔄 **Alternative: Clone Repository**
+
+```bash
+# Clone the complete repository
+git clone https://github.com/UnQOfficial/cursor.git
+
+# Navigate to directory
+cd cursor
+
+# Launch installer (choose your preferred method)
+chmod +x cursor.sh && sudo ./cursor.sh     # Interactive
+# OR
+chmod +x cursor.sh && sudo ./cursor.sh -a  # Auto install
+```
+
+***
+
 ## Android Installation Guide
 
 ### Setting Up Termux (Prerequisite)
@@ -43,17 +121,26 @@ This installer provides a seamless way to set up [Cursor AI Editor](https://curs
 
 2. Install a Linux distribution on your Android device using one of these guides:
    
-   - **Kali Linux (Option 1)**: [To Install Kali Linux on Android (No Root) 2025](https://www.kali.org/docs/nethunter/nethunter-rootless/)
+   - **Kali Linux (Option 1)**: [How to Install Kali Linux on Android (No Root) 2025](https://www.kali.org/docs/nethunter/nethunter-rootless/)
    
-   - **Ubuntu (Option 2, Recommended)**: [To Install Ubuntu on Android Without Root](https://github.com/UnQOfficial/ubuntu)
+   - **Ubuntu (Option 2, Recommended)**: [How to Install Ubuntu on Android Without Root](https://github.com/UnQOfficial/ubuntu)
 
 ### Installing Cursor on Android
 
 Once you're in the Linux environment (Kali or Ubuntu):
 
+#### 🚀 **Quick Install Commands**
+
+```bash
+# Auto install (fastest method)
+curl -fsSL https://raw.githubusercontent.com/UnQOfficial/cursor/main/cursor.sh | sudo bash -s -- -a
+```
+
+#### 📦 **Manual Install Method**
+
 1. Download the installer script:
    ```bash
-   wget https://raw.githubusercontent.com/UnQOfficial/cursor/refs/heads/main/cursor.sh
+   wget https://raw.githubusercontent.com/UnQOfficial/cursor/main/cursor.sh
    ```
 
 2. Make it executable:
@@ -61,69 +148,82 @@ Once you're in the Linux environment (Kali or Ubuntu):
    chmod +x cursor.sh
    ```
 
-3. Run the installer with sudo (for proper system-wide installation):
+3. Run the installer with sudo:
    ```bash
-   sudo bash cursor.sh
+   sudo bash cursor.sh -a  # Auto install
+   # OR
+   sudo bash cursor.sh     # Interactive menu
    ```
-
-4. Follow the on-screen instructions to complete the installation.
 
 > **Note:** If you get "sudo: command not found", install it first with: `apt update && apt install sudo`
 
+***
+
 ## Linux Installation Guide
 
-### Quick Install Method
+### 💻 **Command Line Usage**
 
-For fast installation with interactive menu:
+<div align="center">
+  <img src="https://img.shields.io/badge/Interface-Terminal%20Based-brightgreen?style=for-the-badge&logo=terminal">
+</div>
 
-```bash
-sudo bash cursor.sh
-```
-
-### Auto Install Method (No Prompts)
-
-For automated installation without any user interaction:
+### 🎮 **Available Commands**
 
 ```bash
-sudo bash cursor.sh -a
-```
-
-### Command Line Reference
-
-```
 Usage: cursor.sh [OPTION]
 
 Options:
-  -a, --auto-install  Auto install Cursor (no prompts, direct installation)
-  -i, --install       Install Cursor AI Editor with automatic dependency resolution
-  -u, --uninstall     Completely remove Cursor AI Editor from your system
-  -p, --update        Update to the latest Cursor AI Editor version
-  -r, --reset-ids     Reset Cursor telemetry & request IDs for enhanced privacy
-  --about             Show detailed information about Cursor AI Editor
-  -h, --help          Display this comprehensive help message
+  -a, --auto-install    Auto install Cursor (no prompts, direct installation)
+  -i, --install         Install Cursor AI Editor with automatic dependency resolution
+  -u, --uninstall       Completely remove Cursor AI Editor from your system
+  -p, --update          Update to the latest Cursor AI Editor version
+  -r, --reset-ids       Reset Cursor telemetry & request IDs for enhanced privacy
+  --about               Show detailed information about Cursor AI Editor
+  -h, --help            Display this comprehensive help message
+
+Examples:
+  sudo bash cursor.sh -a     # Auto install without prompts
+  sudo bash cursor.sh -i     # Interactive installation
+  bash cursor.sh -r          # Reset request IDs
+  sudo bash cursor.sh -p     # Update to latest version
 ```
 
-#### Practical Examples
+### 🎯 **Interactive Menu System**
 
-Auto install Cursor AI Editor (perfect for automation):
-```bash
-sudo bash cursor.sh -a
+When running without arguments, you'll see:
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║                                                              ║
+║  ██╗   ██╗███╗   ██╗ ██████╗                               ║
+║  ██║   ██║████╗  ██║██╔═══██╗                              ║
+║  ██║   ██║██╔██╗ ██║██║   ██║                              ║
+║  ██║   ██║██║╚██╗██║██║▄▄ ██║                              ║
+║  ╚██████╔╝██║ ╚████║╚██████╔╝                              ║
+║   ╚═════╝ ╚═╝  ╚═══╝ ╚══▀▀═╝                               ║
+║                                                              ║
+║                 ┌─────────────────────────┐                 ║
+║                 │        cursor           │                 ║
+║                 └─────────────────────────┘                 ║
+║                                                              ║
+╚══════════════════════════════════════════════════════════════╝
+
+🚀 Enhanced Cursor AI Editor Installer & Manager 🚀
+✨ Author: UnQ Enhanced by AI
+🌟 Version: 4.1 - Professional Edition
+📌 Modern UI with Advanced Progress Tracking & Auto Install
+
+Select an option:
+
+1) Install Cursor AI Editor
+2) Uninstall Cursor AI Editor 
+3) Update Cursor AI Editor
+4) Reset Request IDs
+5) About Cursor
+6) Exit
 ```
 
-Install Cursor AI Editor interactively:
-```bash
-sudo bash cursor.sh -i
-```
-
-Reset your request IDs for improved privacy (no root required):
-```bash
-bash cursor.sh -r
-```
-
-Update to the latest version:
-```bash
-sudo bash cursor.sh -p
-```
+***
 
 ## System Requirements
 
@@ -141,6 +241,8 @@ sudo bash cursor.sh -p
 - **Architecture**: ARM64 or x86_64 processor
 - **Storage**: Minimum 500MB free disk space recommended
 
+***
+
 ## Status Information
 
 The installer features an innovative status dashboard that displays:
@@ -149,6 +251,8 @@ The installer features an innovative status dashboard that displays:
 - Latest available version from official repositories
 - Color-coded status indicators for better visibility
 - System architecture compatibility information
+
+***
 
 ## Enhanced Privacy Controls
 
@@ -163,6 +267,8 @@ This command:
 - Creates secure backups of your original configuration
 - Generates new randomized identifiers
 - Preserves your editor settings and preferences
+
+***
 
 ## Troubleshooting Guide
 
@@ -188,28 +294,119 @@ bash cursor.sh -r
 
 # Check installation status
 sudo bash cursor.sh --about
+
+# Force reinstall
+sudo bash cursor.sh -a
 ```
 
-## Advanced Features
+***
 
-### Professional ASCII Banner
-The installer features a stunning UnQ ASCII art banner that automatically centers itself based on your terminal width for optimal visual experience.
+## 🛠️ Advanced Features
 
-### Smart Progress Tracking
-Real-time progress bars show exactly what's happening during installation, extraction, and configuration phases.
+### 🎯 **Smart Installation System**
+- **Automatic Architecture Detection** - No manual configuration needed
+- **Dependency Auto-Resolution** - Installs missing packages automatically  
+- **Professional ASCII Interface** - Beautiful terminal UI with UnQ branding
+- **Progress Visualization** - Real-time progress bars and status indicators
+- **Error Recovery** - Intelligent fallback mechanisms
+- **Update Management** - Seamless version updates
 
-### Automatic Fallback
-If the latest version can't be fetched, the installer automatically falls back to a stable default version to ensure successful installation.
+### 🔧 **Developer Tools**
+- **Real-time System Monitoring** - Live status updates
+- **Multi-language Support** - Works with various terminal environments
+- **Cross-platform Compatibility** - Ubuntu, Debian, Kali, Arch support
+- **Automated Testing** - Built-in system verification
+- **Privacy Controls** - Advanced telemetry management
 
-## Copyright and License
+***
+
+## 🤝 Contributing
+
+<div align="center">
+
+[
+[
+
+</div>
+
+We welcome contributions! Please feel free to submit issues, feature requests, or pull requests to make this installer even better.
+
+### 📝 **Development Setup**
+```bash
+# Fork the repository on GitHub
+git clone https://github.com/YourUsername/cursor.git
+cd cursor
+
+# Create a new branch
+git checkout -b feature/your-feature-name
+
+# Make your changes and test
+./cursor.sh --about  # Test the installer
+
+# Commit your changes
+git commit -m "Add: your feature description"
+
+# Push and create a pull request
+git push origin feature/your-feature-name
+```
+
+***
+
+## 📞 Support & Community
+
+<div align="center">
+
+[
+[
+[
+
+</div>
+
+### 🆘 **Need Help?**
+- 📋 **GitHub Issues** - For bug reports and feature requests
+- 💬 **Discussions** - For questions and community support
+- 📱 **Telegram** - Join our community chat
+- 📧 **Email** - devunq@gmail.com
+- 🌟 **Documentation** - Check our [Wiki](https://github.com/UnQOfficial/cursor/wiki)
+
+***
+
+## 📊 Project Stats
+
+<div align="center">
+
+
+
+![Lines of code](https://img.shields.io/tokei/lines/="center">
+
+[
 
 This script is provided under the MIT License - free to use, modify and distribute.
 
+**Free to use, modify, and distribute! 🎉**
+
+</div>
+
+***
+
 ## About the Developer
 
-Developed with ❤️ by **Sandeep Gaddam**  
+<div align="center">
+  
+**Sandeep Gaddam (UnQ)**
+
+[
+[
+[
+
 **Version:** 4.1 - Professional Edition  
 **Enhanced by:** UnQ AI  
+
+*Passionate Android developer and open-source enthusiast*
+
+**"Making AI-powered development accessible to everyone"**
+
+</div>
 
 ### Connect with the Developer
 - GitHub: [@UnQOfficial](https://github.com/UnQOfficial)
@@ -217,14 +414,26 @@ Developed with ❤️ by **Sandeep Gaddam**
 
 ***
 
+<div align="center">
+
+### ⭐ **Star History**
+
+[
+
+***
+
+### 🏆 **Project Milestones**
+
+![GitHub milestones](https://img.shields.io/github/milestones/progressp Cursor AI Editor successfully, please consider starring the repository to show your support!
+
+**Made with ❤️ for the Android developer community**
+
+[
+
+</div>
+
+***
+
 <p align="center">
   <sub>© 2025 Sandeep Gaddam (UnQ). All rights reserved.</sub>
 </p>
-
-### Contributing
-
-We welcome contributions! Please feel free to submit issues, feature requests, or pull requests to make this installer even better.
-
-### Star the Repository ⭐
-
-If this installer helped you set up Cursor AI Editor successfully, please consider starring the repository to show your support!
