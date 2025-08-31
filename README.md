@@ -45,7 +45,7 @@ This installer provides a seamless way to set up [Cursor AI Editor](https://curs
    
    - **Kali Linux (Option 1)**: [To Install Kali Linux on Android (No Root) 2025](https://www.kali.org/docs/nethunter/nethunter-rootless/)
    
-   - **Ubuntu (Option 2, Recommended)**: [To Install Ubuntu on Android Without Root](https//github.com/UnQOfficial/ubuntu/)
+   - **Ubuntu (Option 2, Recommended)**: [To Install Ubuntu on Android Without Root](https://github.com/UnQOfficial/ubuntu)
 
 ### Installing Cursor on Android
 
