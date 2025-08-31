@@ -1,22 +1,21 @@
-#!/bin/bash
-
 ################################################################################
-#                                                                              #
-#  ██╗   ██╗███╗   ██╗ ██████╗                                               #
-#  ██║   ██║████╗  ██║██╔═══██╗                                              #
-#  ██║   ██║██╔██╗ ██║██║   ██║                                              #
-#  ██║   ██║██║╚██╗██║██║▄▄ ██║                                              #
-#  ╚██████╔╝██║ ╚████║╚██████╔╝                                              #
-#   ╚═════╝ ╚═╝  ╚═══╝ ╚══▀▀═╝                                               #
-#                                                                              #
-#        ┌─────────────────────────────────────┐                              #
-#        │           cursor                    │                              #
-#        └─────────────────────────────────────┘                              #
-#                                                                              #
-#  🚀 Enhanced Cursor AI Editor Installer & Manager 🚀                        #
-#  ✨ Author: UnQ Enhanced by AI                                              #
-#  🌟 Version: 4.0 - Professional Edition                                     #
-#  📌 Modern UI with Advanced Progress Tracking                               #
+#                                                                             #
+#               ██╗   ██╗███╗   ██╗ ██████╗                                  #
+#               ██║   ██║████╗  ██║██╔═══██╗                                 #
+#               ██║   ██║██╔██╗ ██║██║   ██║                                 #
+#               ██║   ██║██║╚██╗██║██║▄▄ ██║                                 #
+#               ╚██████╔╝██║ ╚████║╚██████╔╝                                 #
+#                ╚═════╝ ╚═╝  ╚═══╝ ╚══▀▀═╝                                  #
+#                                                                             #
+#                 ┌─────────────────────────┐                                #
+#                 │        CURSOR           │                                #
+#                 └─────────────────────────┘                                #
+#                                                                             #
+#  🚀 Enhanced Cursor AI Editor Installer & Manager 🚀                       #
+#  ✨ Author: UnQ Enhanced by AI                                             #
+#  🌟 Version: 4.1 - Professional Edition                                    #
+#  📌 Modern UI with Advanced Progress Tracking & Auto Install               #
+#                                                                             #
 ################################################################################
 
 APP_NAME="Cursor"
@@ -24,6 +23,7 @@ APP_VERSION="0.48.6"
 ARCH=$(uname -m)
 APPIMAGE_URL=""
 VERSION_JSON_URL="https://raw.githubusercontent.com/oslook/cursor-ai-downloads/refs/heads/main/version-history.json"
+AUTO_INSTALL=false
 
 if [[ "$SUDO_USER" ]] && [[ "$EUID" -eq 0 ]]; then
     ACTUAL_HOME=$(eval echo ~$SUDO_USER)
@@ -48,6 +48,53 @@ RESET="\e[0m"
 
 print_text() {
     echo -e "$1"
+}
+
+print_centered() {
+    local text="$1"
+    local color="$2"
+    local terminal_width=$(tput cols 2>/dev/null || echo 80)
+    local text_length=${#text}
+    local padding=$(( (terminal_width - text_length) / 2 ))
+    
+    printf "%*s" $padding ""
+    echo -e "${color}${text}${RESET}"
+}
+
+display_banner() {
+    clear
+    local terminal_width=$(tput cols 2>/dev/null || echo 80)
+    
+    # Calculate padding for centering
+    local banner_width=78
+    local padding=$(( (terminal_width - banner_width) / 2 ))
+    local pad_str=""
+    for ((i=0; i<padding; i++)); do
+        pad_str+=" "
+    done
+
+    echo
+    echo -e "${pad_str}${CYAN}${BOLD}################################################################################${RESET}"
+    echo -e "${pad_str}${CYAN}${BOLD}#                                                                              #${RESET}"
+    echo -e "${pad_str}${CYAN}${BOLD}#  ██╗   ██╗███╗   ██╗ ██████╗                                               #${RESET}"
+    echo -e "${pad_str}${CYAN}${BOLD}#  ██║   ██║████╗  ██║██╔═══██╗                                              #${RESET}"
+    echo -e "${pad_str}${CYAN}${BOLD}#  ██║   ██║██╔██╗ ██║██║   ██║                                              #${RESET}"
+    echo -e "${pad_str}${CYAN}${BOLD}#  ██║   ██║██║╚██╗██║██║▄▄ ██║                                              #${RESET}"
+    echo -e "${pad_str}${CYAN}${BOLD}#  ╚██████╔╝██║ ╚████║╚██████╔╝                                              #${RESET}"
+    echo -e "${pad_str}${CYAN}${BOLD}#   ╚═════╝ ╚═╝  ╚═══╝ ╚══▀▀═╝                                               #${RESET}"
+    echo -e "${pad_str}${CYAN}${BOLD}#                                                                              #${RESET}"
+    echo -e "${pad_str}${CYAN}${BOLD}#                 ┌─────────────────────────┐                                 #${RESET}"
+    echo -e "${pad_str}${CYAN}${BOLD}#                 │        cursor           │                                 #${RESET}"
+    echo -e "${pad_str}${CYAN}${BOLD}#                 └─────────────────────────┘                                 #${RESET}"
+    echo -e "${pad_str}${CYAN}${BOLD}#                                                                              #${RESET}"
+    echo -e "${pad_str}${CYAN}${BOLD}################################################################################${RESET}"
+    echo
+    
+    print_centered "🚀 Enhanced Cursor AI Editor Installer & Manager 🚀" "${MAGENTA}${BOLD}"
+    print_centered "✨ Author: UnQ Enhanced by AI" "${CYAN}${BOLD}"
+    print_centered "🌟 Version: 4.1 - Professional Edition" "${YELLOW}${BOLD}"
+    print_centered "📌 Modern UI with Advanced Progress Tracking & Auto Install" "${BLUE}${BOLD}"
+    echo
 }
 
 print_box() {
@@ -114,6 +161,12 @@ confirm_action() {
     local message=$1
     local default_choice=${2:-"n"}
     
+    # Skip confirmation in auto mode
+    if [[ "$AUTO_INSTALL" == true ]]; then
+        print_text "${GREEN}${BOLD}[AUTO] $message - Proceeding automatically${RESET}"
+        return 0
+    fi
+    
     print_text "${YELLOW}${BOLD}[CONFIRM] $message${RESET}"
     print_text "${CYAN}Are you sure you want to continue? [y/N]:${RESET} "
     read -r choice
@@ -130,8 +183,10 @@ check_root() {
     if [[ $EUID -ne 0 ]]; then
         print_text "${RED}${BOLD}[ERROR] Root privileges required for system installation.${RESET}"
         print_text "${YELLOW}Please run with sudo: ${BOLD}sudo $0${RESET}"
-        print_text "${YELLOW}Press Enter to return to menu...${RESET}"
-        read -r
+        if [[ "$AUTO_INSTALL" != true ]]; then
+            print_text "${YELLOW}Press Enter to return to menu...${RESET}"
+            read -r
+        fi
         return 1
     fi
     return 0
@@ -184,10 +239,8 @@ install_dependencies() {
         return 1
     fi
 
-    # Wait a moment for installation to complete
     sleep 2
 
-    # Re-check which dependencies are still missing after installation attempt
     local still_missing=()
     for dep in "${missing_deps[@]}"; do
         if ! command -v "$dep" >/dev/null 2>&1; then
@@ -199,7 +252,6 @@ install_dependencies() {
         print_text "${YELLOW}${BOLD}[WARNING] Some dependencies couldn't be installed: ${still_missing[*]}${RESET}"
         print_text "${YELLOW}${BOLD}[INFO] Trying alternative package names...${RESET}"
         
-        # Try alternative names for common packages
         local alt_packages=()
         for dep in "${still_missing[@]}"; do
             case "$dep" in
@@ -215,7 +267,6 @@ install_dependencies() {
             esac
         done
 
-        # Try installing alternative packages
         if command -v apt >/dev/null 2>&1; then
             $use_sudo apt install -y "${alt_packages[@]}" >/dev/null 2>&1
         elif command -v dnf >/dev/null 2>&1; then
@@ -226,7 +277,6 @@ install_dependencies() {
 
         sleep 1
 
-        # Final check
         local final_missing=()
         for dep in "${still_missing[@]}"; do
             if ! command -v "$dep" >/dev/null 2>&1; then
@@ -237,7 +287,7 @@ install_dependencies() {
         if [[ ${#final_missing[@]} -gt 0 ]]; then
             print_text "${YELLOW}${BOLD}[WARNING] Could not install: ${final_missing[*]}${RESET}"
             print_text "${YELLOW}${BOLD}[INFO] Script will continue, but some features may not work properly.${RESET}"
-            return 0  # Don't fail completely, just warn
+            return 0
         fi
     fi
 
@@ -261,17 +311,25 @@ check_dependencies() {
 
     if [[ ${#missing_deps[@]} -gt 0 ]]; then
         print_text "${YELLOW}${BOLD}[INFO] Missing dependencies: ${missing_deps[*]}${RESET}"
-        if confirm_action "Install missing dependencies automatically?"; then
+        
+        local install_deps=true
+        if [[ "$AUTO_INSTALL" != true ]]; then
+            if ! confirm_action "Install missing dependencies automatically?"; then
+                install_deps=false
+            fi
+        fi
+        
+        if [[ "$install_deps" == true ]]; then
             if install_dependencies "${missing_deps[@]}"; then
                 print_text "${GREEN}${BOLD}[SUCCESS] Dependencies installed successfully!${RESET}"
                 return 0
             else
                 print_text "${YELLOW}${BOLD}[WARNING] Some dependencies may be missing, but continuing...${RESET}"
-                return 0  # Continue anyway
+                return 0
             fi
         else
             print_text "${YELLOW}${BOLD}[WARNING] Continuing without installing dependencies...${RESET}"
-            return 0  # Continue anyway
+            return 0
         fi
     fi
 
@@ -280,17 +338,7 @@ check_dependencies() {
 }
 
 display_header() {
-    clear
-    local content=(
-        ""
-        "${CYAN}${BOLD}UnQ Enhanced Cursor Manager${RESET}"
-        "${CYAN}${BOLD}Professional Installation Suite${RESET}"
-        ""
-        "${MAGENTA}${BOLD}Version 4.0 - Advanced Edition${RESET}"
-        ""
-    )
-    print_box "${content[@]}"
-    echo
+    display_banner
 }
 
 create_temp_dir() {
@@ -343,6 +391,122 @@ fetch_download_urls() {
 
     print_text "${GREEN}${BOLD}[SUCCESS] Version ${APP_VERSION} available for ${ARCH}${RESET}"
     return 0
+}
+
+auto_install_cursor() {
+    display_banner
+    
+    print_text "${MAGENTA}${BOLD}[AUTO INSTALL MODE] Starting automatic installation...${RESET}"
+    echo
+    
+    if ! check_root; then
+        exit 1
+    fi
+
+    check_dependencies || {
+        print_text "${YELLOW}${BOLD}[WARNING] Continuing with dependency issues...${RESET}"
+    }
+
+    print_text "${CYAN}${BOLD}[1/5] Preparing installation environment...${RESET}"
+    create_temp_dir || exit 1
+
+    print_text "${CYAN}${BOLD}[2/5] Fetching version information...${RESET}"
+    fetch_download_urls
+
+    print_text "${CYAN}${BOLD}[3/5] Downloading Cursor AI Editor v${APP_VERSION}...${RESET}"
+    if [[ -z "$APPIMAGE_URL" ]]; then
+        if [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
+            APPIMAGE_URL="https://downloads.cursor.com/production/1649e229afdef8fd1d18ea173f063563f1e722ef/linux/arm64/Cursor-${APP_VERSION}-aarch64.AppImage"
+        else
+            APPIMAGE_URL="https://downloads.cursor.com/production/1649e229afdef8fd1d18ea173f063563f1e722ef/linux/x64/Cursor-${APP_VERSION}-x86_64.AppImage"
+        fi
+    fi
+
+    if ! wget -q --timeout=30 --tries=3 --show-progress -O Cursor.AppImage "$APPIMAGE_URL" 2>/dev/null; then
+        print_text "${RED}${BOLD}[ERROR] Download failed. Please check your internet connection.${RESET}"
+        cleanup
+        exit 1
+    fi
+
+    print_text "${CYAN}${BOLD}[4/5] Processing AppImage...${RESET}"
+    if ! chmod +x Cursor.AppImage; then
+        print_text "${RED}${BOLD}[ERROR] Permission setup failed.${RESET}"
+        cleanup
+        exit 1
+    fi
+
+    print_text "${YELLOW}${BOLD}[INFO] Extracting AppImage (this may take a moment)...${RESET}"
+    if ! ./Cursor.AppImage --appimage-extract >/dev/null 2>&1; then
+        print_text "${RED}${BOLD}[ERROR] Extraction failed.${RESET}"
+        cleanup
+        exit 1
+    fi
+
+    if [[ ! -d "squashfs-root" ]]; then
+        print_text "${RED}${BOLD}[ERROR] Extraction directory not found.${RESET}"
+        cleanup
+        exit 1
+    fi
+
+    print_text "${CYAN}${BOLD}[5/5] Installing system-wide...${RESET}"
+    
+    if [[ -d "$INSTALL_DIR" ]]; then
+        rm -rf "$INSTALL_DIR"
+    fi
+    
+    mkdir -p "$INSTALL_DIR"
+    if ! cp -r squashfs-root/* "$INSTALL_DIR/"; then
+        print_text "${RED}${BOLD}[ERROR] Installation failed.${RESET}"
+        cleanup
+        exit 1
+    fi
+
+    ln -sf "$INSTALL_DIR/AppRun" "$SYMLINK_PATH"
+
+    cat > "$DESKTOP_FILE" << EOF
+[Desktop Entry]
+Name=Cursor
+Comment=The AI-powered Code Editor - UnQ Enhanced
+GenericName=Text Editor
+Exec=cursor --no-sandbox %F
+Icon=$INSTALL_DIR/co.anysphere.cursor.png
+Type=Application
+StartupNotify=true
+StartupWMClass=Cursor
+Categories=TextEditor;Development;IDE;Utility;
+MimeType=text/plain;application/x-cursor-workspace;
+Actions=new-empty-window;
+Keywords=cursor;code;editor;programming;developer;ai;unq;
+X-AppImage-Version=$APP_VERSION
+
+[Desktop Action new-empty-window]
+Name=New Empty Window
+Exec=cursor --no-sandbox --new-window %F
+Icon=$INSTALL_DIR/co.anysphere.cursor.png
+EOF
+
+    chmod +x "$INSTALL_DIR/AppRun"
+    chmod +x "$DESKTOP_FILE"
+    update-desktop-database >/dev/null 2>&1 || true
+
+    cleanup
+
+    echo
+    print_text "${GREEN}${BOLD}✅ AUTO INSTALLATION COMPLETE!${RESET}"
+    
+    local success_content=(
+        ""
+        "${MAGENTA}${BOLD}Cursor AI Editor v${APP_VERSION}${RESET}"
+        "${GREEN}${BOLD}Successfully Auto-Installed${RESET}"
+        ""
+    )
+    print_box "${success_content[@]}"
+
+    print_text "${CYAN}${BOLD}Launch Options:${RESET}"
+    print_text "• Application Menu: Search for 'Cursor'"
+    print_text "• Terminal: ${BOLD}cursor --no-sandbox${RESET}"
+    echo
+    print_text "${GREEN}${BOLD}Installation completed successfully in auto mode!${RESET}"
 }
 
 install_cursor() {
@@ -637,7 +801,7 @@ show_about() {
     echo
     
     print_text "${BOLD}Enhanced Installer Info:${RESET}"
-    print_text "• Version: 4.0 Professional"
+    print_text "• Version: 4.1 Professional"
     print_text "• Enhanced by: UnQ AI"
     print_text "• Architecture: $ARCH"
     print_text "• Latest Version: $APP_VERSION"
@@ -749,6 +913,10 @@ main_menu() {
 }
 
 case "${1:-}" in
+    -a|--auto-install)
+        AUTO_INSTALL=true
+        auto_install_cursor
+        ;;
     -i|--install)
         install_cursor
         ;;
@@ -761,22 +929,25 @@ case "${1:-}" in
     -r|--reset-ids)
         reset_request_ids
         ;;
-    -a|--about)
+    --about)
         show_about
         ;;
     -h|--help)
-        print_text "${CYAN}${BOLD}UnQ Enhanced Cursor Manager v4.0${RESET}"
+        display_banner
+        print_text "${CYAN}${BOLD}UnQ Enhanced Cursor Manager v4.1${RESET}"
         print_text "${CYAN}Usage: $0 [OPTION]${RESET}"
         echo
         print_text "${BOLD}Options:${RESET}"
-        print_text "  -i, --install     Install Cursor AI Editor"
-        print_text "  -u, --uninstall   Uninstall Cursor AI Editor" 
-        print_text "  -p, --update      Update Cursor AI Editor"
-        print_text "  -r, --reset-ids   Reset telemetry IDs"
-        print_text "  -a, --about       Show about information"
-        print_text "  -h, --help        Show this help"
+        print_text "  -a, --auto-install  Auto install Cursor (no prompts)"
+        print_text "  -i, --install       Install Cursor AI Editor"
+        print_text "  -u, --uninstall     Uninstall Cursor AI Editor" 
+        print_text "  -p, --update        Update Cursor AI Editor"
+        print_text "  -r, --reset-ids     Reset telemetry IDs"
+        print_text "  --about             Show about information"
+        print_text "  -h, --help          Show this help"
         echo
         print_text "${YELLOW}If no option provided, interactive menu will start.${RESET}"
+        print_text "${GREEN}${BOLD}Auto Install Example: sudo bash cursor.sh -a${RESET}"
         ;;
     *)
         main_menu
